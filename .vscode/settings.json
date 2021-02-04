@@ -1,0 +1,12 @@
+{
+    "git.ignoreLimitWarning": true,
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.preferences.quoteStyle": "single",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "editor.detectIndentation": false,
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    }
+}
