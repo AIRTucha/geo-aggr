@@ -1,9 +1,9 @@
-import { Container, injectable } from "inversify";
+import { Container, injectable } from 'inversify'
 import 'reflect-metadata'
-import { Core } from "../core";
+import { Core } from '../core'
 import type { PublicAPI } from '../core/apis/PublicAPI'
-import { HTTPPublicAPI } from "../services/HTTPPublicAPI";
-import TYPES from "./types";
+import { HTTPPublicAPI } from '../services/HTTPPublicAPI'
+import TYPES from './types'
 
 @injectable()
 export class BaseContainer {

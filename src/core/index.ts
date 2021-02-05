@@ -1,7 +1,7 @@
-import { inject, injectable } from "inversify";
+import { inject, injectable } from 'inversify'
 import 'reflect-metadata'
-import TYPES from "../di/types";
-import { PublicAPI } from "./apis/PublicAPI";
+import TYPES from '../di/types'
+import { PublicAPI } from './apis/PublicAPI'
 
 
 @injectable()

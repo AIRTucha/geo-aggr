@@ -1,4 +1,4 @@
-import { BaseContainer } from "./src/di/config";
+import { BaseContainer } from './src/di/config'
 
 const app = new BaseContainer()
 
