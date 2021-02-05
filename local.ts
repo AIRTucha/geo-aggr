@@ -1,5 +1,5 @@
-import { BaseContainer } from './src/di/config'
+import { LocalContainer } from './src/di/config'
 
-const app = new BaseContainer()
+const app = new LocalContainer()
 
 app.run()
