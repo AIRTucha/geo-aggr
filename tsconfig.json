@@ -9,7 +9,7 @@
         "esModuleInterop": true,
         "typeRoots": [
             "./node_modules/@types",
-            "./packages/typings"
+            "./typings"
         ],
         "jsx": "preserve",
         "lib": [
@@ -21,7 +21,6 @@
         "strict": true,
     },
     "exclude": [
-        "node_modules",
-        "configs"
+        "node_modules"
     ]
 }
