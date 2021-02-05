@@ -33,3 +33,10 @@ export class LocalContainer extends BaseContainer {
         this.container.bind<DataInjection>(TYPES.DataInjection).to(MockDataInjection)
     }
 }
+
+@injectable()
+export class ProdContainer extends BaseContainer {
+    bindInfra(): void {
+        console.error('UNIMPLEMENTED')
+    }
+}
