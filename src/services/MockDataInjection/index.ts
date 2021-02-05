@@ -1,7 +1,7 @@
-import { injectable } from 'inversify'
-import { Observable } from 'rxjs'
+import { injectable } from "inversify";
+import { Observable } from "rxjs";
 import 'reflect-metadata'
-import { DataInjection, LocationData } from '../../core/apis/DataInjection'
+import { DataInjection, LocationData } from "../../core/apis/DataInjection";
 
 @injectable()
 export class MockDataInjection implements DataInjection {
@@ -14,8 +14,8 @@ export class MockDataInjection implements DataInjection {
             long: Math.random()
           },
           id: Math.random().toString()
-        })
-      }, 1000)
-    })
+        });
+      }, 1000);
+    });
   }
 }

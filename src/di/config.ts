@@ -5,6 +5,7 @@ import { DataInjection } from '../core/apis/DataInjection'
 import type { PublicAPI } from '../core/apis/PublicAPI'
 import { HTTPPublicAPI } from '../services/HTTPPublicAPI'
 import { MockDataInjection } from '../services/MockDataInjection'
+import { TgDataInjection } from '../services/TgDataInjection'
 import TYPES from './types'
 
 abstract class BaseContainer {
@@ -30,7 +31,7 @@ abstract class BaseContainer {
 @injectable()
 export class LocalContainer extends BaseContainer {
     bindInfra(): void {
-        this.container.bind<DataInjection>(TYPES.DataInjection).to(MockDataInjection)
+        this.container.bind<DataInjection>(TYPES.DataInjection).to(TgDataInjection)
     }
 }
 
