@@ -9,20 +9,20 @@ import { Telegraf } from 'telegraf'
 export class TgDataInjection implements DataInjection {
   listen(): Observable<LocationData> {
       
-    const bot = new Telegraf("1667286177:AAEbRz5di9CqqwJcz8EDmyVAOTameSqqEtA")
+    const bot = new Telegraf('1667286177:AAEbRz5di9CqqwJcz8EDmyVAOTameSqqEtA')
     bot.start((ctx) => ctx.reply('Send us your location, pal'))
     bot.launch()
 
     return new Observable(subscriber => {
-        bot.on("location", (ctx) => { 
+        bot.on('location', (ctx) => { 
             subscriber.next({
                 location: {
                   lat: ctx.message.location.latitude ,
                   long: ctx.message.location.longitude
                 },
                 id: ctx.message.chat.id.toString()
-              });
-            ctx.reply("Location saved")  
+              })
+            ctx.reply('Location saved')  
         }
         )
     })
