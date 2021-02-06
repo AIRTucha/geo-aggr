@@ -5,6 +5,7 @@
   "scripts": {
     "start": "ts-node local",
     "start:prod": "ts-node prod",
+    "init-test-data": "ts-node test_utils/init_osm_test_data.ts",
     "lint": "eslint . --ext .ts",
     "fix": "eslint . --ext .ts --fix",
     "type": "tsc",
@@ -21,6 +22,7 @@
     "express": "~4.16.1",
     "inversify": "^5.0.5",
     "morgan": "~1.9.1",
+    "osm-extractor": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.6.3",
     "telegraf": "^4.0.2",
