@@ -6,6 +6,37 @@ import { DataInjection, RawSample } from '../../core/apis/DataInjection'
 import * as fs from 'fs'
 import { execSync } from 'child_process'
 
+const distTable = [
+  { el: 1, freq: 0.1 },
+  { el: 2, freq: 0.2 },
+  { el: 3, freq: 0.2 },
+  { el: 4, freq: 0.4 },
+  { el: 5, freq: 0.1 },
+]
+
+function genRandom(): number {
+  const maxRange = 100
+  const table = distTable
+
+  const el = Math.floor(Math.random() * maxRange) + 1
+
+  let rangeStart = 0
+
+  const ret = table.find((val) => {
+    const start = rangeStart
+    const end = rangeStart + Math.round(maxRange * val.freq)
+
+    if (start < el && el <= end) {
+      return true
+    }
+
+    rangeStart = end
+    return false
+  })
+
+  return ret ? ret.el : 0
+}
+
 interface OsmTestData {
   version: number,
   generator: string,
@@ -17,6 +48,7 @@ interface OsmData {
   id: string,
   lat: number,
   lon: number,
+  risk: number
 }
 
 @injectable()
@@ -39,7 +71,7 @@ export class MockOsmDataInjection implements DataInjection {
         subscriber.next({
           lat: data[idx].lat,
           long: data[idx].lon,
-          risk: 5,
+          risk: genRandom(),
           date: Date.now(),
           id: data[idx].id
         })
