@@ -1,9 +1,13 @@
 import { GeoPoint } from "./apis/DataInjection";
 
-const MIN_BRANCH_SIZE = 100
+export const MIN_BRANCH_SIZE = 100
 const MIN_BRANCH_AREA = MIN_BRANCH_SIZE * MIN_BRANCH_SIZE
 
 export type QPoint<T> = GeoPoint & { value: T }
+
+export type Quad<T> = {
+    readonly points: readonly QPoint<T>[]
+} & GeoPoint
 
 export function qpoint<T>(lat: number, long: number, data: T) {
     return { lat, long, data }
@@ -34,24 +38,13 @@ function isInRange(val: number, min: number, max: number) {
     return val >= min && val <= max
 }
 
-// function segmentIntersection(min1: number, max1: number, min2: number, max2: number) {
-//     return min1 <= max2 && max1 >= min2
-// }
-
-// function intersectsBoundingBoxes(this: BoundingBox, that: BoundingBox) {
-//     return (
-//         segmentIntersection(this.latMin, this.latMax, that.latMin, that.latMax) &&
-//         segmentIntersection(this.longMin, this.longMax, that.longMin, that.longMax)
-//     )
-// }
-
 export interface QTree<T> {
     filter(predicate: (point: QPoint<T>) => boolean): QuadTree<T>
-    getQuads(): QPoint<T>[][]
+    getQuads(): Quad<T>[]
     insert(point: QPoint<T>): boolean
 }
 
-abstract class QuadTree<T> {
+abstract class QuadTree<T> implements QTree<T>{
     constructor(protected readonly boundary: BoundingBox) { }
     isPointInBoundary<T>(point: QPoint<T>) {
         const boundary = this.boundary
@@ -70,7 +63,7 @@ abstract class QuadTree<T> {
             return new QuadBranch(this.boundary)
         }
     }
-    abstract getQuads(): QPoint<T>[][]
+    abstract getQuads(): Quad<T>[]
     abstract doFilter(predicate: (point: QPoint<T>) => boolean): QuadTree<T> | undefined
 }
 
@@ -97,8 +90,8 @@ function getQuads<T>(tree: QuadTree<T>) {
     return tree.getQuads()
 }
 
-function isNotEmptyArray(arr: Array<unknown>) {
-    return arr.length !== 0
+function isNotEmptyArray<T>(arr: Quad<T>) {
+    return arr.points.length !== 0
 }
 
 class QuadBranch<T> extends QuadTree<T>{
@@ -153,7 +146,7 @@ class QuadBranch<T> extends QuadTree<T>{
             new QuadBranch(this.boundary)
     }
 
-    getQuads(): QPoint<T>[][] {
+    getQuads(): Quad<T>[] {
         return branchList(this.branches)
             .map(getQuads)
             .flat()
@@ -165,7 +158,7 @@ class QuadBranch<T> extends QuadTree<T>{
             const { latMin, latMax, longMin, longMax } = this.boundary
             const latMid = midPoint(latMin, latMax)
             const longMid = midPoint(longMin, longMax)
-            const QuadContractor: new (boundary: BoundingBox) => QuadTree<T> = isSmallestBranch(this.boundary) ? Quad : QuadBranch
+            const QuadContractor: new (boundary: BoundingBox) => QuadTree<T> = isSmallestBranch(this.boundary) ? QuadLeaf : QuadBranch
             this.branches = {
                 northWest: new QuadContractor(boundingBox(latMin, latMid, longMin, longMid)),
                 northEast: new QuadContractor(boundingBox(latMid, latMax, longMin, longMid)),
@@ -182,7 +175,7 @@ function midPoint(min: number, max: number) {
     return (max + min) / 2.0;
 }
 
-class Quad<T> extends QuadTree<T> {
+class QuadLeaf<T> extends QuadTree<T> {
     constructor(boundary: BoundingBox, private readonly points: QPoint<T>[] = []) {
         super(boundary)
     }
@@ -198,13 +191,18 @@ class Quad<T> extends QuadTree<T> {
     doFilter(predicate: (point: QPoint<T>) => boolean): QuadTree<T> | undefined {
         const filteredPoints = this.points.filter(predicate)
         if (filteredPoints) {
-            return new Quad(this.boundary, filteredPoints)
+            return new QuadLeaf(this.boundary, filteredPoints)
         } else {
             return undefined
         }
     }
-    getQuads(): QPoint<T>[][] {
-        return [this.points]
+    getQuads(): Quad<T>[] {
+        const boundary = this.boundary
+        return [{
+            points: this.points,
+            lat: midPoint(boundary.latMin, boundary.latMax),
+            long: midPoint(boundary.longMin, boundary.longMax)
+        }]
     }
 }
 
@@ -231,4 +229,3 @@ export default function <T>(): QTree<T> {
         boundingBox(0, 90, 0, 180)
     )
 }
-

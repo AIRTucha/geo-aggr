@@ -1,4 +1,5 @@
-import qtree, { geoDistance, QPoint, QTree } from './qtree'
+import { GeoPoint } from './apis/DataInjection'
+import qtree, { geoDistance, MIN_BRANCH_SIZE, QPoint, QTree, Quad } from './qtree'
 
 const coordsDeltaSmall = 0.0002
 const coordsDeltaLarge = 30
@@ -42,8 +43,15 @@ const farSE = { lat: latFarS, long: lonFarE, value: false }
 const farS = { lat: latFarS, long: longInsideW, value: false }
 const farSW = { lat: latFarS, long: longFarW, value: false }
 
-function flatten(quads: QPoint<boolean>[][]) {
-    return quads.flat()
+
+function flatten(quads: Quad<boolean>[]) {
+    return quads.map(q => q.points).flat()
+}
+
+const halfQuadSize = MIN_BRANCH_SIZE / 2
+
+function quadCenterIsCloseToPoint(point: QPoint<unknown>, center: Quad<unknown>) {
+    expect(geoDistance(point.lat, point.long, center.lat, center.long) <= halfQuadSize).toBeTruthy()
 }
 
 describe('qtree', () => {
@@ -66,9 +74,10 @@ describe('qtree', () => {
             })
 
             it('getPoints', () => {
-                const [points] = tree.getQuads()
-                expect(points.length).toBe(1)
-                expect(points).toContain(insideQuad1)
+                const [quad] = tree.getQuads()
+                quadCenterIsCloseToPoint(insideQuad1, quad)
+                expect(quad.points.length).toBe(1)
+                expect(quad.points).toContain(insideQuad1)
             })
 
 
@@ -81,7 +90,7 @@ describe('qtree', () => {
                 it('keep', () => {
                     const quads = tree.filter(p => p.value).getQuads()
                     expect(quads.length).toBe(1)
-                    expect(quads[0]).toContain(insideQuad1)
+                    expect(quads[0].points).toContain(insideQuad1)
                 })
             })
         })
@@ -101,8 +110,15 @@ describe('qtree', () => {
                 })
 
                 it('getPoints', () => {
-                    const [points] = tree.getQuads()
+                    const [quad] = tree.getQuads()
+
+                    quadCenterIsCloseToPoint(insideQuad1, quad)
+                    quadCenterIsCloseToPoint(insideQuad2, quad)
+
+                    const points = quad.points
+
                     expect(points.length).toBe(2)
+
                     expect(points).toContain(insideQuad1)
                     expect(points).toContain(insideQuad2)
                 })
@@ -114,7 +130,8 @@ describe('qtree', () => {
                     })
 
                     it('remove some', () => {
-                        const [points] = tree.filter(p => p.lat === latInsideN).getQuads()
+                        const [quad] = tree.filter(p => p.lat === latInsideN).getQuads()
+                        const points = quad.points
                         expect(points.length).toBe(1)
                         expect(points).toContain(insideQuad1)
                         expect(points).not.toContain(insideQuad2)
@@ -123,23 +140,23 @@ describe('qtree', () => {
                     it('keep', () => {
                         const quads = tree.filter(p => p.value).getQuads()
                         expect(quads.length).toBe(1)
-                        expect(quads[0]).toContain(insideQuad1)
+                        expect(quads[0].points).toContain(insideQuad1)
                     })
                 })
             })
         })
 
-        function testNearByQuads(testName: string, pointSide: QPoint<boolean>, pointOutside: QPoint<boolean>) {
+        function testNearByQuads(testName: string, pointInside: QPoint<boolean>, pointOutside: QPoint<boolean>) {
 
             describe(testName, () => {
                 it('insert', () => {
-                    expect(tree.insert(pointSide)).toBeTruthy()
+                    expect(tree.insert(pointInside)).toBeTruthy()
                     expect(tree.insert(pointOutside)).toBeTruthy()
                 })
 
                 describe('methods', () => {
                     beforeEach(() => {
-                        tree.insert(pointSide)
+                        tree.insert(pointInside)
                         tree.insert(pointOutside)
                     })
 
@@ -149,7 +166,15 @@ describe('qtree', () => {
 
                         const points = flatten(quads)
 
-                        expect(points).toContain(pointSide)
+                        quads.forEach(quad => {
+                            if (quad.points.includes(pointInside)) {
+                                quadCenterIsCloseToPoint(pointInside, quad)
+                            } else {
+                                quadCenterIsCloseToPoint(pointOutside, quad)
+                            }
+                        })
+
+                        expect(points).toContain(pointInside)
                         expect(points).toContain(pointOutside)
 
                         expect(points.length).toBe(2)
@@ -164,14 +189,14 @@ describe('qtree', () => {
                         it('remove outside', () => {
                             const points = flatten(tree.filter(p => p.value).getQuads())
                             expect(points.length).toBe(1)
-                            expect(points).toContain(pointSide)
+                            expect(points).toContain(pointInside)
                             expect(points).not.toContain(pointOutside)
                         })
 
                         it('remove inside', () => {
                             const points = flatten(tree.filter(p => !p.value).getQuads())
                             expect(points.length).toBe(1)
-                            expect(points).not.toContain(pointSide)
+                            expect(points).not.toContain(pointInside)
                             expect(points).toContain(pointOutside)
                         })
 
@@ -179,7 +204,7 @@ describe('qtree', () => {
                             const quads = tree.filter(p => typeof p === 'object').getQuads()
                             expect(quads.length).toBe(2)
                             const points = flatten(quads)
-                            expect(points).toContain(pointSide)
+                            expect(points).toContain(pointInside)
                             expect(points).toContain(pointOutside)
                             expect(points.length).toBe(2)
                         })
@@ -246,22 +271,22 @@ describe('qtree', () => {
 
         function testNearByQuads(
             testName: string,
-            pointSide1: QPoint<boolean>,
-            pointSide2: QPoint<boolean>,
+            pointInside1: QPoint<boolean>,
+            pointInside2: QPoint<boolean>,
             pointOutside: QPoint<boolean>
         ) {
             describe(testName, () => {
                 it('insert', () => {
-                    expect(tree.insert(pointSide1)).toBeTruthy()
+                    expect(tree.insert(pointInside1)).toBeTruthy()
                     expect(tree.insert(pointOutside)).toBeTruthy()
-                    expect(tree.insert(pointSide2)).toBeTruthy()
+                    expect(tree.insert(pointInside2)).toBeTruthy()
                 })
 
                 describe('methods', () => {
                     beforeEach(() => {
-                        tree.insert(pointSide1)
+                        tree.insert(pointInside1)
                         tree.insert(pointOutside)
-                        tree.insert(pointSide2)
+                        tree.insert(pointInside2)
                     })
 
                     it('getPoints', () => {
@@ -270,8 +295,17 @@ describe('qtree', () => {
 
                         const points = flatten(quads)
 
-                        expect(points).toContain(pointSide1)
-                        expect(points).toContain(pointSide2)
+                        quads.forEach(quad => {
+                            if (quad.points.includes(pointInside1) && quad.points.includes(pointInside2)) {
+                                quadCenterIsCloseToPoint(pointInside1, quad)
+                                quadCenterIsCloseToPoint(pointInside2, quad)
+                            } else {
+                                quadCenterIsCloseToPoint(pointOutside, quad)
+                            }
+                        })
+
+                        expect(points).toContain(pointInside1)
+                        expect(points).toContain(pointInside2)
                         expect(points).toContain(pointOutside)
 
                         expect(points.length).toBe(3)
@@ -286,16 +320,16 @@ describe('qtree', () => {
                         it('remove outside', () => {
                             const points = flatten(tree.filter(p => p.value).getQuads())
                             expect(points.length).toBe(2)
-                            expect(points).toContain(pointSide1)
-                            expect(points).toContain(pointSide2)
+                            expect(points).toContain(pointInside1)
+                            expect(points).toContain(pointInside2)
                             expect(points).not.toContain(pointOutside)
                         })
 
                         it('remove inside', () => {
                             const points = flatten(tree.filter(p => !p.value).getQuads())
                             expect(points.length).toBe(1)
-                            expect(points).not.toContain(pointSide1)
-                            expect(points).not.toContain(pointSide2)
+                            expect(points).not.toContain(pointInside1)
+                            expect(points).not.toContain(pointInside2)
                             expect(points).toContain(pointOutside)
                         })
 
@@ -303,8 +337,8 @@ describe('qtree', () => {
                             const quads = tree.filter(p => typeof p === 'object').getQuads()
                             expect(quads.length).toBe(2)
                             const points = flatten(quads)
-                            expect(points).toContain(pointSide1)
-                            expect(points).toContain(pointSide2)
+                            expect(points).toContain(pointInside1)
+                            expect(points).toContain(pointInside2)
                             expect(points).toContain(pointOutside)
                             expect(points.length).toBe(3)
                         })
