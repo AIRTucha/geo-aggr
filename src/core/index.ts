@@ -1,12 +1,20 @@
 import { inject, injectable } from 'inversify'
 import 'reflect-metadata'
 import TYPES from '../di/types'
-import { DataInjection, LocationData } from './apis/DataInjection'
+import { DataInjection, RawSample } from './apis/DataInjection'
 import { PublicAPI } from './apis/PublicAPI'
+import { SampleStorage } from './apis/SampleStorage'
 
-function formatPoint(point: LocationData) {
+import { interval } from 'rxjs'
+import { map } from 'rxjs/operators'
+import { estimateReliability, evaluateQuads } from './aggregateQuad'
+import { DataEmitter, EvaluationRepository, EvaluationStorage } from './apis/DataEmitter'
+
+function formatPoint(point: RawSample) {
     return `id: ${point.id}, location: ${point.location.lat} ${point.location.long}`
 }
+
+const TICK_INTERVAL = 1000 * 60
 
 @injectable()
 export class Core {
@@ -16,28 +24,53 @@ export class Core {
     @inject(TYPES.DataInjection)
     private dataInjection!: DataInjection
 
+    @inject(TYPES.SampleStorage)
+    private RawSampleStorage!: SampleStorage
+
+    @inject(TYPES.DataEmitter)
+    private dataEmitter!: DataEmitter
+
+    @inject(TYPES.EvaluationStorage)
+    private evaluationStorage!: EvaluationStorage
+
+    injectData(point: RawSample) {
+        // TODO: inject point to user storage
+        this.RawSampleStorage.add(point)
+    }
+
+    clearOutdateSamples() {
+        // this.RawSampleStorage.clearOutdateData()
+        // Remove outdated samples from user storage
+    }
+
     run() {
         this.publicAPI.listen(() => 'ok')
-        this.dataInjection.listen().forEach(point => {
-            console.log(formatPoint(point))
-        })
+        this.dataInjection
+            .listen()
+            .pipe(
+                // TODO: check data integrity
+            )
+            .forEach(point => {
+                console.log(point)
+                this.RawSampleStorage.add(point)
+            })
 
-        // Geo API
-        //// break into independent clusters
-        //// filter
-        //// creat a grid -> arrays of points
+        const geoAggregation = interval(TICK_INTERVAL).pipe(
+            map(() => this.clearOutdateSamples()),
+            map(() => this.RawSampleStorage.getData()),
+            map(estimateReliability),
+            map(evaluateQuads),
+        )
 
-        // listen to data injection
-        // check data integrity
-        // place new point in dataset
+        geoAggregation
+            .pipe(
+                map(evaluations => this.evaluationStorage.update(evaluations)),
+            )
+            .forEach(
+                repository => this.dataEmitter.emit(repository)
+            )
 
-        // run timer
-        // get points from dataset
         // aggregate:
-        //// clean from outdated
-        //// remove unreliable
-        //// break into clusters
-        //// evaluate clusters
         //// update users score
         // emit result
     }

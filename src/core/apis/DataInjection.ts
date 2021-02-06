@@ -5,11 +5,13 @@ export type GeoPoint = {
   long: number
 }
 
-export type LocationData = {
+export type RawSample = {
   location: GeoPoint
+  risk: number
+  date: Date
   id: string
 }
 
 export interface DataInjection {
-  listen(): Observable<LocationData>
+  listen(): Observable<RawSample>
 }

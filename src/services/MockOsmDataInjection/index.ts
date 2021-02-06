@@ -1,7 +1,7 @@
 import { injectable } from 'inversify'
 import { Observable } from 'rxjs'
 import 'reflect-metadata'
-import { DataInjection, LocationData } from '../../core/apis/DataInjection'
+import { DataInjection, RawSample } from '../../core/apis/DataInjection'
 
 import * as fs from 'fs'
 import { execSync } from 'child_process'
@@ -21,7 +21,7 @@ interface OsmData {
 
 @injectable()
 export class MockOsmDataInjection implements DataInjection {
-  listen(): Observable<LocationData> {
+  listen(): Observable<RawSample> {
     let data: OsmData[]
     try {
       const rawdata = fs.readFileSync('test_utils/data_osm.json')
@@ -41,6 +41,8 @@ export class MockOsmDataInjection implements DataInjection {
             lat: data[idx].lat,
             long: data[idx].lon
           },
+          risk: 5,
+          date: new Date(),
           id: data[idx].id
         })
         idx += 1

@@ -6,7 +6,7 @@ const MIN_BRANCH_AREA = MIN_BRANCH_SIZE * MIN_BRANCH_SIZE
 export type QPoint<T> = GeoPoint & { value: T }
 
 export type Quad<T> = {
-    readonly points: readonly QPoint<T>[]
+    readonly points: QPoint<T>[]
 } & GeoPoint
 
 export function qpoint<T>(lat: number, long: number, data: T) {

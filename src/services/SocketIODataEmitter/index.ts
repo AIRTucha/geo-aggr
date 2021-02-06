@@ -1,10 +1,10 @@
 import { injectable } from 'inversify'
-import { DataEmitter, EvaluatedPoint } from '../../core/apis/DataEmitter'
+import { DataEmitter, EvaluationRepository, EvaluationResult } from '../../core/apis/DataEmitter'
 import 'reflect-metadata'
 
 @injectable()
 export class SocketIODataEmitter implements DataEmitter {
-    emit(points: EvaluatedPoint[]): void {
+    emit(points: EvaluationRepository): void {
         throw new Error('Method not implemented.')
     }
 
