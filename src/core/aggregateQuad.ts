@@ -1,6 +1,6 @@
-import { EvaluationResult } from "./apis/DataEmitter";
-import { RawSample } from "./apis/DataInjection";
-import { QPoint, Quad } from "./qtree";
+import { EvaluationResult } from './apis/DataEmitter'
+import { RawSample } from './apis/DataInjection'
+import { QPoint, Quad } from './qtree'
 
 export type GeoAggregation = EvaluationResult & { sourcesIds: string[] }
 export type EvaluatedSample = RawSample & { isReliable: boolean }
