@@ -1,5 +1,5 @@
-import { EvaluationResult } from "./DataEmitter";
-import { GeoPoint } from "./DataInjection";
+import { EvaluationResult } from './DataEmitter'
+import { GeoPoint } from './DataInjection'
 
 export interface EvaluationRepository {
     get(min: GeoPoint, max: GeoPoint): EvaluationResult[]

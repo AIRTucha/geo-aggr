@@ -1,9 +1,9 @@
-import { EvaluationResult } from "../../core/apis/DataEmitter";
-import { GeoPoint } from "../../core/apis/DataInjection";
-import { EvaluationRepository, EvaluationStorage } from "../../core/apis/EvaluationStorage";
-import KDBush from 'kdbush';
-import { retryWhen } from "rxjs/operators";
-import { injectable } from "inversify";
+import { EvaluationResult } from '../../core/apis/DataEmitter'
+import { GeoPoint } from '../../core/apis/DataInjection'
+import { EvaluationRepository, EvaluationStorage } from '../../core/apis/EvaluationStorage'
+import KDBush from 'kdbush'
+import { retryWhen } from 'rxjs/operators'
+import { injectable } from 'inversify'
 
 class KDEvaluationRepository implements EvaluationRepository {
     constructor(
