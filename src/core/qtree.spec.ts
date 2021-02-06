@@ -1,4 +1,3 @@
-import { GeoPoint } from './apis/DataInjection'
 import qtree, { geoDistance, MIN_BRANCH_SIZE, QPoint, QTree, Quad } from './qtree'
 
 const coordsDeltaSmall = 0.0002
@@ -275,6 +274,7 @@ describe('qtree', () => {
             pointInside2: QPoint<boolean>,
             pointOutside: QPoint<boolean>
         ) {
+
             describe(testName, () => {
                 it('insert', () => {
                     expect(tree.insert(pointInside1)).toBeTruthy()

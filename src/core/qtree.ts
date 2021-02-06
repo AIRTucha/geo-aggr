@@ -1,4 +1,4 @@
-import { GeoPoint } from "./apis/DataInjection";
+import { GeoPoint } from './apis/DataInjection'
 
 export const MIN_BRANCH_SIZE = 100
 const MIN_BRANCH_AREA = MIN_BRANCH_SIZE * MIN_BRANCH_SIZE
@@ -172,7 +172,7 @@ class QuadBranch<T> extends QuadTree<T>{
 }
 
 function midPoint(min: number, max: number) {
-    return (max + min) / 2.0;
+    return (max + min) / 2.0
 }
 
 class QuadLeaf<T> extends QuadTree<T> {
@@ -214,8 +214,8 @@ export function geoDistance(lat1: number, lon1: number, lat2: number, lon2: numb
         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    const d = R * c;
-    return d * 1000;
+    const d = R * c
+    return d * 1000
 }
 
 function isSmallestBranch(boundary: BoundingBox) {
