@@ -1,6 +1,7 @@
 import { injectable } from 'inversify'
-import { DataEmitter, EvaluationRepository, EvaluationResult } from '../../core/apis/DataEmitter'
+import { DataEmitter, EvaluationResult } from '../../core/apis/DataEmitter'
 import 'reflect-metadata'
+import { EvaluationRepository } from '../../core/apis/EvaluationStorage'
 
 @injectable()
 export class SocketIODataEmitter implements DataEmitter {

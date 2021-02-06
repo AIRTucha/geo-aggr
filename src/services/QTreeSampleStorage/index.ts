@@ -1,5 +1,4 @@
 import { injectable } from 'inversify'
-import { DataEmitter, EvaluationRepository, EvaluationResult } from '../../core/apis/DataEmitter'
 import 'reflect-metadata'
 import { SampleStorage } from '../../core/apis/SampleStorage'
 import { RawSample } from '../../core/apis/DataInjection'

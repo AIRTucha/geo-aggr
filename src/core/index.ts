@@ -8,7 +8,8 @@ import { SampleStorage } from './apis/SampleStorage'
 import { interval } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { estimateReliability, evaluateQuads } from './aggregateQuad'
-import { DataEmitter, EvaluationRepository, EvaluationStorage } from './apis/DataEmitter'
+import { DataEmitter } from './apis/DataEmitter'
+import { EvaluationStorage } from './apis/EvaluationStorage'
 
 function formatPoint(point: RawSample) {
     return `id: ${point.id}, location: ${point.lat} ${point.long}`
@@ -23,9 +24,6 @@ function log<T>(val: T) {
 
 @injectable()
 export class Core {
-    @inject(TYPES.PublicAPI)
-    private publicAPI!: PublicAPI
-
     @inject(TYPES.DataInjection)
     private dataInjection!: DataInjection
 
@@ -49,8 +47,6 @@ export class Core {
     }
 
     run() {
-        console.log('ok')
-        this.publicAPI.listen(() => 'ok')
         this.dataInjection
             .listen()
             .pipe(
@@ -65,10 +61,9 @@ export class Core {
             map(() => this.RawSampleStorage.getData()),
             map(estimateReliability),
             map(evaluateQuads),
-            map(log),
+            // map(log),
         )
 
-        geoAggregation.forEach(v => console.log(v))
         geoAggregation
             .pipe(
                 map(evaluations => this.evaluationStorage.update(evaluations)),
