@@ -5,10 +5,9 @@ export type GeoPoint = {
   long: number
 }
 
-export type RawSample = {
-  location: GeoPoint
+export type RawSample = GeoPoint & {
   risk: number
-  date: Date
+  date: number
   id: string
 }
 

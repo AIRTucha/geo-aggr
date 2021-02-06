@@ -5,7 +5,6 @@ import { DataEmitter, EvaluationStorage } from '../core/apis/DataEmitter'
 import { DataInjection } from '../core/apis/DataInjection'
 import type { PublicAPI } from '../core/apis/PublicAPI'
 import { HTTPPublicAPI } from '../services/HTTPPublicAPI'
-import { MockDataInjection } from '../services/MockDataInjection'
 import { MockOsmDataInjection } from '../services/MockOsmDataInjection'
 import { TgDataInjection } from '../services/TgDataInjection'
 import { SocketIODataEmitter } from '../services/SocketIODataEmitter'
@@ -13,6 +12,7 @@ import TYPES from './types'
 import { SampleStorage } from '../core/apis/SampleStorage'
 import { MockSampleStorage } from '../services/MockSampleStorage'
 import { MockEvaluationStorage } from '../services/MockEvaluationStorage'
+import { QTreeSampleStorage } from '../services/QTreeSampleStorage'
 
 abstract class BaseContainer {
     protected container = new Container()
@@ -26,7 +26,7 @@ abstract class BaseContainer {
         this.container.bind<PublicAPI>(TYPES.PublicAPI).to(HTTPPublicAPI)
         this.container.bind<Core>(TYPES.Core).to(Core)
         this.container.bind<DataEmitter>(TYPES.DataEmitter).to(SocketIODataEmitter)
-        this.container.bind<SampleStorage>(TYPES.SampleStorage).to(MockSampleStorage)
+        this.container.bind<SampleStorage>(TYPES.SampleStorage).to(QTreeSampleStorage)
         this.container.bind<EvaluationStorage>(TYPES.EvaluationStorage).to(MockEvaluationStorage)
     }
 

@@ -16,11 +16,9 @@ export class TgDataInjection implements DataInjection {
     return new Observable(subscriber => {
       bot.on('location', (ctx) => {
         subscriber.next({
-          location: {
-            lat: ctx.message.location.latitude,
-            long: ctx.message.location.longitude
-          },
-          date: new Date(),
+          lat: ctx.message.location.latitude,
+          long: ctx.message.location.longitude,
+          date: Date.now(),
           risk: 5,
           id: ctx.message.chat.id.toString()
         })

@@ -1,13 +1,14 @@
-import { GeoPoint } from './apis/DataInjection'
+import { GeoPoint } from "../../core/apis/DataInjection"
 
-export const MIN_BRANCH_SIZE = 100
-const MIN_BRANCH_AREA = MIN_BRANCH_SIZE * MIN_BRANCH_SIZE
-
-export type QPoint<T> = GeoPoint & { value: T }
+export type QPoint<T> = GeoPoint & T
 
 export type Quad<T> = {
     readonly points: QPoint<T>[]
 } & GeoPoint
+
+export function flatten<T>(quads: Quad<T>[]) {
+    return quads.map(q => q.points).flat()
+}
 
 export function qpoint<T>(lat: number, long: number, data: T) {
     return { lat, long, data }
@@ -39,13 +40,13 @@ function isInRange(val: number, min: number, max: number) {
 }
 
 export interface QTree<T> {
-    filter(predicate: (point: QPoint<T>) => boolean): QuadTree<T>
+    partition(predicate: (point: QPoint<T>) => boolean): [QuadTree<T>, QuadTree<T>]
     getQuads(): Quad<T>[]
     insert(point: QPoint<T>): boolean
 }
 
 abstract class QuadTree<T> implements QTree<T>{
-    constructor(protected readonly boundary: BoundingBox) { }
+    constructor(protected readonly boundary: BoundingBox, protected readonly minBranchArea: number) { }
     isPointInBoundary<T>(point: QPoint<T>) {
         const boundary = this.boundary
         const containsX = isInRange(point.lat, boundary.latMin, boundary.latMax)
@@ -55,16 +56,15 @@ abstract class QuadTree<T> implements QTree<T>{
     }
 
     abstract insert(point: QPoint<T>): boolean
-    filter(predicate: (point: QPoint<T>) => boolean): QuadTree<T> {
-        const filteredPoints = this.doFilter(predicate)
-        if (filteredPoints) {
-            return filteredPoints
-        } else {
-            return new QuadBranch(this.boundary)
-        }
+    partition(predicate: (point: QPoint<T>) => boolean): [QuadTree<T>, QuadTree<T>] {
+        const [left, removed] = this.doPartition(predicate)
+        return [
+            left ?? new QuadBranch(this.boundary, this.minBranchArea),
+            removed ?? new QuadBranch(this.boundary, this.minBranchArea)
+        ]
     }
     abstract getQuads(): Quad<T>[]
-    abstract doFilter(predicate: (point: QPoint<T>) => boolean): QuadTree<T> | undefined
+    abstract doPartition(predicate: (point: QPoint<T>) => boolean): [QuadTree<T> | undefined, QuadTree<T> | undefined]
 }
 
 type Branches<T> = {
@@ -97,9 +97,10 @@ function isNotEmptyArray<T>(arr: Quad<T>) {
 class QuadBranch<T> extends QuadTree<T>{
     constructor(
         boundary: BoundingBox,
+        minBranchArea: number,
         private branches?: Branches<QuadTree<T>>
     ) {
-        super(boundary)
+        super(boundary, minBranchArea)
     }
 
     insert(point: QPoint<T>): boolean {
@@ -131,19 +132,40 @@ class QuadBranch<T> extends QuadTree<T>{
         }
     }
 
-    doFilter(predicate: (point: QPoint<T>) => boolean): QuadTree<T> | undefined {
-        return this.branches ?
-            new QuadBranch(
-                this.boundary,
-                {
-                    northWest: this.branches.northWest.filter(predicate),
-                    northEast: this.branches.northEast.filter(predicate),
-                    southWest: this.branches.southWest.filter(predicate),
-                    southEast: this.branches.southEast.filter(predicate),
-                }
-            )
-            :
-            new QuadBranch(this.boundary)
+    doPartition(predicate: (point: QPoint<T>) => boolean): [QuadTree<T>, QuadTree<T>] {
+        if (this.branches) {
+            const [leftNorthWest, removedNorthWest] = this.branches.northWest.partition(predicate)
+            const [leftNorthEast, removedNorthEast] = this.branches.northEast.partition(predicate)
+            const [leftSouthWest, removedSouthWest] = this.branches.southWest.partition(predicate)
+            const [leftSouthEast, removedSouthEast] = this.branches.southEast.partition(predicate)
+            return [
+                new QuadBranch(
+                    this.boundary,
+                    this.minBranchArea,
+                    {
+                        northWest: leftNorthWest,
+                        northEast: leftNorthEast,
+                        southWest: leftSouthWest,
+                        southEast: leftSouthEast,
+                    }
+                ),
+                new QuadBranch(
+                    this.boundary,
+                    this.minBranchArea,
+                    {
+                        northWest: removedNorthWest,
+                        northEast: removedNorthEast,
+                        southWest: removedSouthWest,
+                        southEast: removedSouthEast,
+                    }
+                )
+            ]
+        } else {
+            return [
+                new QuadBranch(this.boundary, this.minBranchArea),
+                new QuadBranch(this.boundary, this.minBranchArea)
+            ]
+        }
     }
 
     getQuads(): Quad<T>[] {
@@ -158,12 +180,14 @@ class QuadBranch<T> extends QuadTree<T>{
             const { latMin, latMax, longMin, longMax } = this.boundary
             const latMid = midPoint(latMin, latMax)
             const longMid = midPoint(longMin, longMax)
-            const QuadContractor: new (boundary: BoundingBox) => QuadTree<T> = isSmallestBranch(this.boundary) ? QuadLeaf : QuadBranch
+            const QuadContractor: new (
+                boundary: BoundingBox, minBranchArea: number
+            ) => QuadTree<T> = isSmallestBranch(this.minBranchArea, this.boundary) ? QuadLeaf : QuadBranch
             this.branches = {
-                northWest: new QuadContractor(boundingBox(latMin, latMid, longMin, longMid)),
-                northEast: new QuadContractor(boundingBox(latMid, latMax, longMin, longMid)),
-                southWest: new QuadContractor(boundingBox(latMin, latMid, longMid, longMax)),
-                southEast: new QuadContractor(boundingBox(latMid, latMax, longMid, longMax)),
+                northWest: new QuadContractor(boundingBox(latMin, latMid, longMin, longMid), this.minBranchArea),
+                northEast: new QuadContractor(boundingBox(latMid, latMax, longMin, longMid), this.minBranchArea),
+                southWest: new QuadContractor(boundingBox(latMin, latMid, longMid, longMax), this.minBranchArea),
+                southEast: new QuadContractor(boundingBox(latMid, latMax, longMid, longMax), this.minBranchArea),
             }
         }
 
@@ -175,9 +199,28 @@ function midPoint(min: number, max: number) {
     return (max + min) / 2.0
 }
 
+function partition<T>(array: Array<T>, predicate: (val: T) => boolean): [Array<T>, Array<T>] {
+    let left = []
+    let removed = []
+    for (let val of array) {
+        if (predicate(val)) {
+            left.push(val)
+        } else {
+            removed.push(val)
+        }
+    }
+    return [
+        left,
+        removed
+    ]
+}
+
 class QuadLeaf<T> extends QuadTree<T> {
-    constructor(boundary: BoundingBox, private readonly points: QPoint<T>[] = []) {
-        super(boundary)
+    constructor(
+        boundary: BoundingBox,
+        minBranchArea: number,
+        private readonly points: QPoint<T>[] = []) {
+        super(boundary, minBranchArea)
     }
 
     insert(point: QPoint<T>): boolean {
@@ -188,13 +231,12 @@ class QuadLeaf<T> extends QuadTree<T> {
             return false
         }
     }
-    doFilter(predicate: (point: QPoint<T>) => boolean): QuadTree<T> | undefined {
-        const filteredPoints = this.points.filter(predicate)
-        if (filteredPoints) {
-            return new QuadLeaf(this.boundary, filteredPoints)
-        } else {
-            return undefined
-        }
+    doPartition(predicate: (point: QPoint<T>) => boolean): [QuadTree<T>, QuadTree<T>] {
+        const [leftPoints, removedPoints] = partition(this.points, predicate)
+        return [
+            new QuadLeaf(this.boundary, this.minBranchArea, leftPoints),
+            new QuadLeaf(this.boundary, this.minBranchArea, removedPoints)
+        ]
     }
     getQuads(): Quad<T>[] {
         const boundary = this.boundary
@@ -218,14 +260,15 @@ export function geoDistance(lat1: number, lon1: number, lat2: number, lon2: numb
     return d * 1000
 }
 
-function isSmallestBranch(boundary: BoundingBox) {
+function isSmallestBranch(minBranchArea: number, boundary: BoundingBox) {
     const lat = geoDistance(boundary.latMin, boundary.longMin, boundary.latMin, boundary.longMax)
     const long = geoDistance(boundary.latMin, boundary.longMin, boundary.latMax, boundary.longMin)
-    return lat * long < MIN_BRANCH_AREA
+    return lat * long < minBranchArea
 }
 
-export default function <T>(): QTree<T> {
+export default function <T>(min_branch_size: number = 100): QTree<T> {
     return new QuadBranch(
-        boundingBox(0, 90, 0, 180)
+        boundingBox(0, 90, 0, 180),
+        min_branch_size * min_branch_size
     )
 }

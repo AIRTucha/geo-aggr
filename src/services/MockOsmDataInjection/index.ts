@@ -37,12 +37,10 @@ export class MockOsmDataInjection implements DataInjection {
       let idx = 0
       setInterval(() => {
         subscriber.next({
-          location: {
-            lat: data[idx].lat,
-            long: data[idx].lon
-          },
+          lat: data[idx].lat,
+          long: data[idx].lon,
           risk: 5,
-          date: new Date(),
+          date: Date.now(),
           id: data[idx].id
         })
         idx += 1

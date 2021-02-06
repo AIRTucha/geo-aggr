@@ -1,27 +1,31 @@
+import { QPoint, Quad } from '../services/QTreeSampleStorage/qtree'
 import { EvaluationResult } from './apis/DataEmitter'
 import { RawSample } from './apis/DataInjection'
-import { QPoint, Quad } from './qtree'
 
 export type GeoAggregation = EvaluationResult & { sourcesIds: string[] }
 export type EvaluatedSample = RawSample & { isReliable: boolean }
 
 function getMedianRisk(points: QPoint<EvaluatedSample>[]) {
-    points.sort((ps1, ps2) => ps1.value.risk - ps2.value.risk)
-    return points[Math.floor(points.length / 2)].value.risk
+    points.sort((ps1, ps2) => ps1.risk - ps2.risk)
+    return points[Math.floor(points.length / 2)].risk
+}
+
+function count(points: QPoint<EvaluatedSample>[]) {
+    return points.length
 }
 
 function getIds(points: QPoint<EvaluatedSample>[]) {
-    return points.map(p => p.value.id)
+    return points.map(p => p.id)
 }
 
 function isReliable(point: QPoint<EvaluatedSample>) {
-    return point.value.isReliable
+    return point.isReliable
 }
 
 function estimateRisk(quad: Quad<EvaluatedSample>): GeoAggregation {
     const reliablePoints = quad.points.filter(isReliable)
     return {
-        risk: getMedianRisk(reliablePoints),
+        risk: count(reliablePoints),
         sourcesIds: getIds(quad.points),
         ...quad
     }
@@ -38,10 +42,7 @@ export function estimateReliability(quads: Quad<RawSample>[]): Quad<EvaluatedSam
         points: q.points.map(p => {
             return {
                 ...p,
-                value: {
-                    isReliable: true,
-                    ...p.value
-                }
+                isReliable: true
             }
         }),
     }))

@@ -11,10 +11,15 @@ import { estimateReliability, evaluateQuads } from './aggregateQuad'
 import { DataEmitter, EvaluationRepository, EvaluationStorage } from './apis/DataEmitter'
 
 function formatPoint(point: RawSample) {
-    return `id: ${point.id}, location: ${point.location.lat} ${point.location.long}`
+    return `id: ${point.id}, location: ${point.lat} ${point.long}`
 }
 
-const TICK_INTERVAL = 1000 * 60
+const TICK_INTERVAL = 1000 * 10
+
+function log<T>(val: T) {
+    console.log(val)
+    return val
+}
 
 @injectable()
 export class Core {
@@ -44,6 +49,7 @@ export class Core {
     }
 
     run() {
+        console.log('ok')
         this.publicAPI.listen(() => 'ok')
         this.dataInjection
             .listen()
@@ -51,7 +57,6 @@ export class Core {
                 // TODO: check data integrity
             )
             .forEach(point => {
-                console.log(point)
                 this.RawSampleStorage.add(point)
             })
 
@@ -60,8 +65,10 @@ export class Core {
             map(() => this.RawSampleStorage.getData()),
             map(estimateReliability),
             map(evaluateQuads),
+            map(log),
         )
 
+        geoAggregation.forEach(v => console.log(v))
         geoAggregation
             .pipe(
                 map(evaluations => this.evaluationStorage.update(evaluations)),

@@ -1,4 +1,4 @@
-import qtree, { geoDistance, MIN_BRANCH_SIZE, QPoint, QTree, Quad } from './qtree'
+import qtree, { flatten, geoDistance, QPoint, QTree, Quad } from './qtree'
 
 const coordsDeltaSmall = 0.0002
 const coordsDeltaLarge = 30
@@ -42,11 +42,9 @@ const farSE = { lat: latFarS, long: lonFarE, value: false }
 const farS = { lat: latFarS, long: longInsideW, value: false }
 const farSW = { lat: latFarS, long: longFarW, value: false }
 
+type TestQuad = Quad<{ value: boolean }>
 
-function flatten(quads: Quad<boolean>[]) {
-    return quads.map(q => q.points).flat()
-}
-
+const MIN_BRANCH_SIZE = 100
 const halfQuadSize = MIN_BRANCH_SIZE / 2
 
 function quadCenterIsCloseToPoint(point: QPoint<unknown>, center: Quad<unknown>) {
@@ -54,10 +52,10 @@ function quadCenterIsCloseToPoint(point: QPoint<unknown>, center: Quad<unknown>)
 }
 
 describe('qtree', () => {
-    let tree: QTree<boolean>
+    let tree: QTree<{ value: boolean }>
 
     beforeEach(() => {
-        tree = qtree<boolean>()
+        tree = qtree<{ value: boolean }>(MIN_BRANCH_SIZE)
     })
 
     describe('single point', () => {
@@ -82,14 +80,21 @@ describe('qtree', () => {
 
             describe('filter', () => {
                 it('remove', () => {
-                    const quads = tree.filter(p => !p.value).getQuads()
-                    expect(quads.length).toBe(0)
+                    const [left, removed] = tree.partition(p => !p.value)
+                    const pointsRemoved = removed.getQuads()
+                    expect(left.getQuads().length).toBe(0)
+                    expect(pointsRemoved.length).toBe(1)
+                    expect(pointsRemoved[0].points.length).toBe(1)
+                    expect(pointsRemoved[0].points).toContain(insideQuad1)
                 })
 
                 it('keep', () => {
-                    const quads = tree.filter(p => p.value).getQuads()
-                    expect(quads.length).toBe(1)
-                    expect(quads[0].points).toContain(insideQuad1)
+                    const [left, removed] = tree.partition(p => p.value)
+                    const pointsLeft = left.getQuads()
+                    expect(removed.getQuads().length).toBe(0)
+                    expect(pointsLeft.length).toBe(1)
+                    expect(pointsLeft[0].points.length).toBe(1)
+                    expect(pointsLeft[0].points).toContain(insideQuad1)
                 })
             })
         })
@@ -124,28 +129,48 @@ describe('qtree', () => {
 
                 describe('filter', () => {
                     it('remove all', () => {
-                        const quads = tree.filter(p => !p.value).getQuads()
-                        expect(quads.length).toBe(0)
+                        const [left, removed] = tree.partition(p => !p.value)
+                        const pointsRemoved = removed.getQuads()
+
+                        expect(left.getQuads().length).toBe(0)
+
+                        expect(pointsRemoved.length).toBe(1)
+
+                        expect(pointsRemoved[0].points).toContain(insideQuad1)
+                        expect(pointsRemoved[0].points).toContain(insideQuad2)
                     })
 
                     it('remove some', () => {
-                        const [quad] = tree.filter(p => p.lat === latInsideN).getQuads()
-                        const points = quad.points
-                        expect(points.length).toBe(1)
-                        expect(points).toContain(insideQuad1)
-                        expect(points).not.toContain(insideQuad2)
+                        const [left, removed] = tree.partition(p => p.lat === latInsideN)
+                        const pointsRemoved = removed.getQuads()
+                        const pointsLeft = left.getQuads()
+
+                        expect(pointsLeft.length).toBe(1)
+                        expect(pointsRemoved.length).toBe(1)
+
+                        expect(pointsLeft[0].points.length).toBe(1)
+                        expect(pointsLeft[0].points).toContain(insideQuad1)
+
+                        expect(pointsRemoved[0].points.length).toBe(1)
+                        expect(pointsRemoved[0].points).toContain(insideQuad2)
                     })
 
                     it('keep', () => {
-                        const quads = tree.filter(p => p.value).getQuads()
-                        expect(quads.length).toBe(1)
-                        expect(quads[0].points).toContain(insideQuad1)
+                        const [left, removed] = tree.partition(p => p.value)
+                        const pointsLeft = left.getQuads()
+
+                        expect(removed.getQuads().length).toBe(0)
+                        expect(pointsLeft.length).toBe(1)
+
+                        expect(pointsLeft[0].points.length).toBe(2)
+                        expect(pointsLeft[0].points).toContain(insideQuad1)
+                        expect(pointsLeft[0].points).toContain(insideQuad2)
                     })
                 })
             })
         })
 
-        function testNearByQuads(testName: string, pointInside: QPoint<boolean>, pointOutside: QPoint<boolean>) {
+        function testNearByQuads(testName: string, pointInside: QPoint<{ value: boolean }>, pointOutside: QPoint<{ value: boolean }>) {
 
             describe(testName, () => {
                 it('insert', () => {
@@ -181,31 +206,58 @@ describe('qtree', () => {
 
                     describe('filter', () => {
                         it('remove all', () => {
-                            const quads = tree.filter(p => p.lat === 0).getQuads()
-                            expect(quads.length).toBe(0)
+                            const [left, removed] = tree.partition(p => p.lat === 0)
+                            const quadsRemoved = removed.getQuads()
+                            const pointsRemoved = flatten(quadsRemoved)
+
+                            expect(left.getQuads().length).toBe(0)
+                            expect(quadsRemoved.length).toBe(2)
+
+                            expect(pointsRemoved).toContain(pointInside)
+                            expect(pointsRemoved).toContain(pointOutside)
                         })
 
                         it('remove outside', () => {
-                            const points = flatten(tree.filter(p => p.value).getQuads())
-                            expect(points.length).toBe(1)
-                            expect(points).toContain(pointInside)
-                            expect(points).not.toContain(pointOutside)
+                            const [left, removed] = tree.partition(p => p.value)
+                            const pointsRemoved = removed.getQuads()
+                            const pointsLeft = left.getQuads()
+
+                            expect(pointsLeft.length).toBe(1)
+                            expect(pointsRemoved.length).toBe(1)
+
+                            expect(pointsLeft[0].points.length).toBe(1)
+                            expect(pointsLeft[0].points).toContain(pointInside)
+
+                            expect(pointsRemoved[0].points.length).toBe(1)
+                            expect(pointsRemoved[0].points).toContain(pointOutside)
                         })
 
                         it('remove inside', () => {
-                            const points = flatten(tree.filter(p => !p.value).getQuads())
-                            expect(points.length).toBe(1)
-                            expect(points).not.toContain(pointInside)
-                            expect(points).toContain(pointOutside)
+                            const [left, removed] = tree.partition(p => !p.value)
+                            const pointsRemoved = removed.getQuads()
+                            const pointsLeft = left.getQuads()
+
+                            expect(pointsLeft.length).toBe(1)
+                            expect(pointsRemoved.length).toBe(1)
+
+                            expect(pointsLeft[0].points.length).toBe(1)
+                            expect(pointsLeft[0].points).toContain(pointOutside)
+
+                            expect(pointsRemoved[0].points.length).toBe(1)
+                            expect(pointsRemoved[0].points).toContain(pointInside)
                         })
 
                         it('keep', () => {
-                            const quads = tree.filter(p => typeof p === 'object').getQuads()
-                            expect(quads.length).toBe(2)
-                            const points = flatten(quads)
-                            expect(points).toContain(pointInside)
-                            expect(points).toContain(pointOutside)
-                            expect(points.length).toBe(2)
+
+                            const [left, removed] = tree.partition(p => typeof p === 'object')
+                            const quadsLeft = left.getQuads()
+                            const pointsLeft = flatten(quadsLeft)
+
+                            expect(removed.getQuads().length).toBe(0)
+                            expect(pointsLeft.length).toBe(2)
+
+                            expect(pointsLeft).toContain(pointInside)
+                            expect(pointsLeft).toContain(pointOutside)
                         })
                     })
                 })
@@ -270,9 +322,9 @@ describe('qtree', () => {
 
         function testNearByQuads(
             testName: string,
-            pointInside1: QPoint<boolean>,
-            pointInside2: QPoint<boolean>,
-            pointOutside: QPoint<boolean>
+            pointInside1: QPoint<{ value: boolean }>,
+            pointInside2: QPoint<{ value: boolean }>,
+            pointOutside: QPoint<{ value: boolean }>
         ) {
 
             describe(testName, () => {
@@ -313,34 +365,60 @@ describe('qtree', () => {
 
                     describe('filter', () => {
                         it('remove all', () => {
-                            const quads = tree.filter(p => p.lat === 0).getQuads()
-                            expect(quads.length).toBe(0)
+                            const [left, removed] = tree.partition(p => p.lat === 0)
+                            const pointsRemoved = flatten(removed.getQuads())
+
+                            expect(left.getQuads().length).toBe(0)
+                            expect(removed.getQuads().length).toBe(2)
+
+                            expect(pointsRemoved.length).toBe(3)
+                            expect(pointsRemoved).toContain(pointInside1)
+                            expect(pointsRemoved).toContain(pointInside2)
+                            expect(pointsRemoved).toContain(pointOutside)
                         })
 
                         it('remove outside', () => {
-                            const points = flatten(tree.filter(p => p.value).getQuads())
-                            expect(points.length).toBe(2)
-                            expect(points).toContain(pointInside1)
-                            expect(points).toContain(pointInside2)
-                            expect(points).not.toContain(pointOutside)
+                            const [left, removed] = tree.partition(p => p.value)
+                            const pointsLeft = flatten(left.getQuads())
+                            const pointsRemoved = flatten(removed.getQuads())
+
+                            expect(pointsLeft.length).toBe(2)
+                            expect(pointsLeft).toContain(pointInside1)
+                            expect(pointsLeft).toContain(pointInside2)
+                            expect(pointsLeft).not.toContain(pointOutside)
+
+                            expect(pointsRemoved.length).toBe(1)
+                            expect(pointsRemoved).not.toContain(pointInside1)
+                            expect(pointsRemoved).not.toContain(pointInside2)
+                            expect(pointsRemoved).toContain(pointOutside)
                         })
 
                         it('remove inside', () => {
-                            const points = flatten(tree.filter(p => !p.value).getQuads())
-                            expect(points.length).toBe(1)
-                            expect(points).not.toContain(pointInside1)
-                            expect(points).not.toContain(pointInside2)
-                            expect(points).toContain(pointOutside)
+                            const [left, removed] = tree.partition(p => !p.value)
+                            const pointsLeft = flatten(left.getQuads())
+                            const pointsRemoved = flatten(removed.getQuads())
+
+                            expect(pointsLeft.length).toBe(1)
+                            expect(pointsLeft).not.toContain(pointInside1)
+                            expect(pointsLeft).not.toContain(pointInside2)
+                            expect(pointsLeft).toContain(pointOutside)
+
+                            expect(pointsRemoved.length).toBe(2)
+                            expect(pointsRemoved).toContain(pointInside1)
+                            expect(pointsRemoved).toContain(pointInside2)
+                            expect(pointsRemoved).not.toContain(pointOutside)
                         })
 
                         it('keep', () => {
-                            const quads = tree.filter(p => typeof p === 'object').getQuads()
-                            expect(quads.length).toBe(2)
-                            const points = flatten(quads)
-                            expect(points).toContain(pointInside1)
-                            expect(points).toContain(pointInside2)
-                            expect(points).toContain(pointOutside)
-                            expect(points.length).toBe(3)
+                            const [left, removed] = tree.partition(p => typeof p === 'object')
+                            const pointsLeft = flatten(left.getQuads())
+
+                            expect(removed.getQuads().length).toBe(0)
+
+                            expect(pointsLeft.length).toBe(3)
+                            expect(pointsLeft).toContain(pointInside1)
+                            expect(pointsLeft).toContain(pointInside2)
+                            expect(pointsLeft).toContain(pointOutside)
                         })
                     })
                 })

@@ -3,7 +3,7 @@ import { DataEmitter, EvaluationRepository, EvaluationResult } from '../../core/
 import 'reflect-metadata'
 import { SampleStorage } from '../../core/apis/SampleStorage'
 import { RawSample } from '../../core/apis/DataInjection'
-import { Quad } from '../../core/qtree'
+import { Quad } from '../QTreeSampleStorage/qtree'
 
 @injectable()
 export class MockSampleStorage implements SampleStorage {
