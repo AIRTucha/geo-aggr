@@ -1,6 +1,7 @@
 import { injectable } from 'inversify'
 import 'reflect-metadata'
-import { EvaluationRepository, EvaluationResult, EvaluationStorage } from '../../core/apis/DataEmitter'
+import { EvaluationResult } from '../../core/apis/DataEmitter'
+import { EvaluationRepository, EvaluationStorage } from '../../core/apis/EvaluationStorage'
 
 @injectable()
 export class MockEvaluationStorage implements EvaluationStorage {
