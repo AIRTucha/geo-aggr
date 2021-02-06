@@ -1,11 +1,13 @@
 import { Container, injectable } from 'inversify'
 import 'reflect-metadata'
 import { Core } from '../core'
+import { DataEmitter } from '../core/apis/DataEmitter'
 import { DataInjection } from '../core/apis/DataInjection'
 import type { PublicAPI } from '../core/apis/PublicAPI'
 import { HTTPPublicAPI } from '../services/HTTPPublicAPI'
 import { MockDataInjection } from '../services/MockDataInjection'
 import { TgDataInjection } from '../services/TgDataInjection'
+import { SocketIODataEmitter } from '../services/SocketIODataEmitter'
 import TYPES from './types'
 
 abstract class BaseContainer {
@@ -19,6 +21,7 @@ abstract class BaseContainer {
     bindBase() {
         this.container.bind<PublicAPI>(TYPES.PublicAPI).to(HTTPPublicAPI)
         this.container.bind<Core>(TYPES.Core).to(Core)
+        this.container.bind<DataEmitter>(TYPES.DataEmitter).to(SocketIODataEmitter)
     }
 
     abstract bindInfra(): void

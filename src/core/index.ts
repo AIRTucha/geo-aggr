@@ -17,10 +17,28 @@ export class Core {
     private dataInjection!: DataInjection
 
     run() {
-        console.log('ok')
         this.publicAPI.listen(() => 'ok')
         this.dataInjection.listen().forEach(point => {
             console.log(formatPoint(point))
         })
+
+        // Geo API
+        //// break into independent clusters
+        //// filter
+        //// creat a grid -> arrays of points
+
+        // listen to data injection
+        // check data integrity
+        // place new point in dataset
+
+        // run timer
+        // get points from dataset
+        // aggregate:
+        //// clean from outdated
+        //// remove unreliable
+        //// break into clusters
+        //// evaluate clusters
+        //// update users score
+        // emit result
     }
 }
