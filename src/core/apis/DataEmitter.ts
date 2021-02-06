@@ -1,4 +1,4 @@
-import { GeoPoint } from "./DataInjection";
+import { GeoPoint } from './DataInjection'
 
 export type EvaluatedPoint = GeoPoint & { value: number }
 
