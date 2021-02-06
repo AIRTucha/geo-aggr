@@ -1,4 +1,4 @@
-import { GeoPoint } from "../../core/apis/DataInjection"
+import { GeoPoint } from '../../core/apis/DataInjection'
 
 export type QPoint<T> = GeoPoint & T
 
@@ -200,9 +200,9 @@ function midPoint(min: number, max: number) {
 }
 
 function partition<T>(array: Array<T>, predicate: (val: T) => boolean): [Array<T>, Array<T>] {
-    let left = []
-    let removed = []
-    for (let val of array) {
+    const left = []
+    const removed = []
+    for (const val of array) {
         if (predicate(val)) {
             left.push(val)
         } else {
@@ -266,7 +266,7 @@ function isSmallestBranch(minBranchArea: number, boundary: BoundingBox) {
     return lat * long < minBranchArea
 }
 
-export default function <T>(min_branch_size: number = 100): QTree<T> {
+export default function <T>(min_branch_size = 100): QTree<T> {
     return new QuadBranch(
         boundingBox(0, 90, 0, 180),
         min_branch_size * min_branch_size

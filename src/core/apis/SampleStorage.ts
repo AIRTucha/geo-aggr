@@ -1,5 +1,5 @@
 
-import { Quad } from '../../services/QTreeSampleStorage/qtree';
+import { Quad } from '../../services/QTreeSampleStorage/qtree'
 import { RawSample } from './DataInjection'
 
 export interface SampleStorage {
