@@ -27,7 +27,7 @@ function isReliable(point: QPoint<EvaluatedSample>) {
 function estimateRisk(quad: Quad<EvaluatedSample>): GeoAggregation {
     const reliablePoints = quad.points.filter(isReliable)
     return {
-        risk: count(reliablePoints),
+        risk: getMedianRisk(reliablePoints),
         samples: quad.points,
         ...quad
     }
