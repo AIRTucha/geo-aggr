@@ -33,8 +33,8 @@ export class HTTPDataEmitter implements DataEmitter {
                 if (this.evaluationRepository) {
                     res.send(
                         this.evaluationRepository.get(
-                            { lat: latMin, long: longMin },
-                            { lat: latMax, long: longMax }
+                            { lat: latMin, lng: longMin },
+                            { lat: latMax, lng: longMax }
                         ).length.toString()
                     )
                 } else {

@@ -12,7 +12,7 @@ class KDEvaluationRepository implements EvaluationRepository {
     }
     get(min: GeoPoint, max: GeoPoint): EvaluationResult[] {
         return this.index
-            .range(min.lat, min.long, max.lat, max.long)
+            .range(min.lat, min.lng, max.lat, max.lng)
             .map(i => this.evaluations[i])
     }
 }
@@ -21,7 +21,7 @@ class KDEvaluationRepository implements EvaluationRepository {
 export class KDEvaluationStorage implements EvaluationStorage {
     update(evaluations: EvaluationResult[]): EvaluationRepository {
         return new KDEvaluationRepository(
-            new KDBush<EvaluationResult>(evaluations, p => p.lat, p => p.long),
+            new KDBush<EvaluationResult>(evaluations, p => p.lat, p => p.lng),
             evaluations
         )
     }

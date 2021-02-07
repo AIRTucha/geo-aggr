@@ -2,7 +2,7 @@ import { Observable } from 'rxjs'
 
 export type GeoPoint = {
   lat: number
-  long: number
+  lng: number
 }
 
 export type RawSample = GeoPoint & {

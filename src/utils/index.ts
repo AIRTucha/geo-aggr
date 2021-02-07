@@ -12,5 +12,5 @@ export function geoDistance(lat1: number, lon1: number, lat2: number, lon2: numb
 }
 
 export function samplesDistance(p1: GeoPoint, p2: GeoPoint) {
-    return geoDistance(p1.lat, p1.long, p2.lat, p2.long)
+    return geoDistance(p1.lat, p1.lng, p2.lat, p2.lng)
 }

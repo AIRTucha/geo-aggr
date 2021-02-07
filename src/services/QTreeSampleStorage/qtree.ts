@@ -51,7 +51,7 @@ abstract class QuadTree<T> implements QTree<T>{
     isPointInBoundary<T>(point: QPoint<T>) {
         const boundary = this.boundary
         const containsX = isInRange(point.lat, boundary.latMin, boundary.latMax)
-        const containsY = isInRange(point.long, boundary.longMin, boundary.longMax)
+        const containsY = isInRange(point.lng, boundary.longMin, boundary.longMax)
 
         return containsX && containsY
     }
@@ -243,7 +243,7 @@ class QuadLeaf<T> extends QuadTree<T> {
         return [{
             points: this.points,
             lat: midPoint(boundary.latMin, boundary.latMax),
-            long: midPoint(boundary.longMin, boundary.longMax)
+            lng: midPoint(boundary.longMin, boundary.longMax)
         }]
     }
 }

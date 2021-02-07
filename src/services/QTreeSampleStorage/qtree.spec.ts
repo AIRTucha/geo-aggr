@@ -7,41 +7,41 @@ const coordsDeltaLarge = 30
 const latInsideN = 55.7560
 const latInsideS = 55.7562
 
-const longInsideW = 37.6152
-const longInsideE = 37.6157
+const lngInsideW = 37.6152
+const lngInsideE = 37.6157
 
 const latOutsideN = latInsideN - coordsDeltaSmall
 const latOutsideS = latInsideS + coordsDeltaSmall
 
-const longOutsideW = longInsideW - coordsDeltaSmall
-const lonOutsideE = longInsideE + coordsDeltaSmall
+const lngOutsideW = lngInsideW - coordsDeltaSmall
+const lonOutsideE = lngInsideE + coordsDeltaSmall
 
 const latFarN = latInsideN - coordsDeltaLarge
 const latFarS = latInsideS + coordsDeltaLarge
 
-const longFarW = longInsideW - coordsDeltaLarge
-const lonFarE = longInsideE + coordsDeltaLarge
+const lngFarW = lngInsideW - coordsDeltaLarge
+const lonFarE = lngInsideE + coordsDeltaLarge
 
-const insideQuad1 = { lat: latInsideN, long: longInsideW, value: true }
-const insideQuad2 = { lat: latInsideS, long: longInsideE, value: true }
+const insideQuad1 = { lat: latInsideN, lng: lngInsideW, value: true }
+const insideQuad2 = { lat: latInsideS, lng: lngInsideE, value: true }
 
-const outsideW = { lat: latInsideN, long: longOutsideW, value: false }
-const outsideNW = { lat: latOutsideN, long: longOutsideW, value: false }
-const outsideN = { lat: latOutsideN, long: longInsideE, value: false }
-const outsideNE = { lat: latOutsideN, long: lonOutsideE, value: false }
-const outsideE = { lat: latInsideN, long: lonOutsideE, value: false }
-const outsideSE = { lat: latOutsideS, long: lonOutsideE, value: false }
-const outsideS = { lat: latOutsideS, long: longInsideW, value: false }
-const outsideSW = { lat: latOutsideS, long: longOutsideW, value: false }
+const outsideW = { lat: latInsideN, lng: lngOutsideW, value: false }
+const outsideNW = { lat: latOutsideN, lng: lngOutsideW, value: false }
+const outsideN = { lat: latOutsideN, lng: lngInsideE, value: false }
+const outsideNE = { lat: latOutsideN, lng: lonOutsideE, value: false }
+const outsideE = { lat: latInsideN, lng: lonOutsideE, value: false }
+const outsideSE = { lat: latOutsideS, lng: lonOutsideE, value: false }
+const outsideS = { lat: latOutsideS, lng: lngInsideW, value: false }
+const outsideSW = { lat: latOutsideS, lng: lngOutsideW, value: false }
 
-const farW = { lat: latInsideN, long: longFarW, value: false }
-const farNW = { lat: latFarN, long: longFarW, value: false }
-const farN = { lat: latFarN, long: longInsideE, value: false }
-const farNE = { lat: latFarN, long: lonFarE, value: false }
-const farE = { lat: latInsideN, long: lonFarE, value: false }
-const farSE = { lat: latFarS, long: lonFarE, value: false }
-const farS = { lat: latFarS, long: longInsideW, value: false }
-const farSW = { lat: latFarS, long: longFarW, value: false }
+const farW = { lat: latInsideN, lng: lngFarW, value: false }
+const farNW = { lat: latFarN, lng: lngFarW, value: false }
+const farN = { lat: latFarN, lng: lngInsideE, value: false }
+const farNE = { lat: latFarN, lng: lonFarE, value: false }
+const farE = { lat: latInsideN, lng: lonFarE, value: false }
+const farSE = { lat: latFarS, lng: lonFarE, value: false }
+const farS = { lat: latFarS, lng: lngInsideW, value: false }
+const farSW = { lat: latFarS, lng: lngFarW, value: false }
 
 type TestQuad = Quad<{ value: boolean }>
 
@@ -49,7 +49,7 @@ const MIN_BRANCH_SIZE = 100
 const halfQuadSize = MIN_BRANCH_SIZE / 2
 
 function quadCenterIsCloseToPoint(point: QPoint<unknown>, center: Quad<unknown>) {
-    expect(geoDistance(point.lat, point.long, center.lat, center.long) <= halfQuadSize).toBeTruthy()
+    expect(geoDistance(point.lat, point.lng, center.lat, center.lng) <= halfQuadSize).toBeTruthy()
 }
 
 describe('qtree', () => {

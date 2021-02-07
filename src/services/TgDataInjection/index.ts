@@ -22,7 +22,7 @@ export class TgDataInjection implements DataInjection {
       bot.on('location', (ctx) => {
         subscriber.next({
           lat: ctx.message.location.latitude,
-          long: ctx.message.location.longitude,
+          lng: ctx.message.location.longitude,
           date: Date.now(),
           risk: 5,
           id: ctx.message.chat.id.toString()

@@ -73,7 +73,7 @@ export class MockOsmDataInjection implements DataInjection {
       setInterval(() => {
         subscriber.next({
           lat: data[idx].lat,
-          long: data[idx].lon,
+          lng: data[idx].lon,
           risk: genRandom(),
           date: Math.floor(Date.now() - Math.random() * 1000 * 60 * 20),
           id: data[idx].id
