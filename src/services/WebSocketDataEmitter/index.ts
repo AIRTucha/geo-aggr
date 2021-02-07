@@ -1,4 +1,4 @@
-import { id, injectable } from 'inversify'
+import { injectable } from 'inversify'
 import { DataEmitter, } from '../../core/apis/DataEmitter'
 import 'reflect-metadata'
 import ws from 'ws'

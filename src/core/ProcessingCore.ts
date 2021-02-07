@@ -4,19 +4,16 @@ import TYPES from '../di/types'
 import { DataInjection, RawSample } from './apis/DataInjection'
 import { SampleStorage } from './apis/SampleStorage'
 
-import { from, interval, merge, Observable, partition } from 'rxjs'
+import { EMPTY, empty, from, interval, merge, Observable, partition } from 'rxjs'
 import { filter, map, mergeAll, mergeMap, shareReplay } from 'rxjs/operators'
-import { estimateReliability, evaluateQuads, GeoAggregation, isSampleConsistent, isTooFrequent, sourceKarma } from './aggregateQuad'
+import { estimateReliability, evaluateQuads, GeoAggregation } from './aggregateQuad'
 import { DataEmitter } from './apis/DataEmitter'
 import { EvaluationStorage } from './apis/EvaluationStorage'
 import { SourceStorage } from './apis/SourceStorage'
+import { log } from '../utils'
+import { sourceKarma, SourceScore } from './evaluateKarma'
 
 const TICK_INTERVAL = 1000 * 10
-
-const log = (tag: string) => map(<T>(val: T) => {
-    console.log(`[${tag}]`)
-    return val
-})
 
 @injectable()
 export default class Core {
@@ -32,9 +29,21 @@ export default class Core {
     @inject(TYPES.SourceStorage)
     private sourceStorage!: SourceStorage
 
-    processDataInBatch() {
+    private updateKarma = (karmaChanges: SourceScore[]) =>
+        karmaChanges
+            .map(karmaChange =>
+                this
+                    .sourceStorage
+                    .updateKarma(
+                        karmaChange.id,
+                        karmaChange.karmaDelta
+                    )
+            )
+
+    private processDataInBatch() {
         return interval(TICK_INTERVAL)
             .pipe(
+                log('Evaluate risks'),
                 map(() => this.sampleStorage.clearOutdateData()),
                 map(outdateSamples => this.sourceStorage.removeSample(outdateSamples)),
                 map(() => this.sampleStorage.getData()),
@@ -43,38 +52,30 @@ export default class Core {
                     return estimateReliability(sd, mean, samples)
                 }),
                 map(evaluateQuads),
-                log('Evaluated risks'),
                 shareReplay(),
             )
     }
 
-    updateEmittedData(data: Observable<GeoAggregation[]>) {
+    private updateEmittedData(data: Observable<GeoAggregation[]>) {
         data
             .pipe(
-                log('Update evaluation storage'),
+                log('Publish evaluation'),
                 map(evaluations => this.evaluationStorage.update(evaluations)),
             )
             .forEach(
                 repository => {
-                    console.log('Emit new evaluation')
                     this.dataEmitter.emit(repository)
                 }
             )
     }
 
-    updateSourcesReliability(data: Observable<GeoAggregation[]>) {
+    private updateSourcesReliability(data: Observable<GeoAggregation[]>) {
         data
             .pipe(
-                mergeMap(from),
                 log('Recompute karma'),
-                map(point => sourceKarma(point.risk, point.samples)),
-                mergeMap(from),
+                map(points => points.flatMap(sourceKarma)),
             )
-            .forEach(
-                karmaChange => {
-                    this.sourceStorage.updateKarma(karmaChange.id, karmaChange.karmaDelta)
-                }
-            )
+            .forEach(this.updateKarma)
     }
 
     run() {

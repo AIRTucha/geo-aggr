@@ -7,7 +7,8 @@ import { SampleStorage } from './apis/SampleStorage'
 import { filter } from 'rxjs/operators'
 
 import { SourceStorage } from './apis/SourceStorage'
-import { isSampleConsistent, isTooFrequent } from './aggregateQuad'
+import { log } from '../utils'
+import { isSampleConsistent, isTooFrequent } from './validateReliablity'
 
 const BAD_SAMPLE_PENALTY = -13
 
@@ -52,6 +53,7 @@ export default class Core {
         this.dataInjection
             .listen()
             .pipe(
+                log('New data sample arrived'),
                 filter(
                     point => this.debounceTooFrequentSamples(point)
                 ),

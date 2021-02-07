@@ -1,3 +1,4 @@
+import { map } from 'rxjs/operators'
 import { GeoPoint } from '../core/apis/DataInjection'
 export function geoDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
     const R = 6378.137
@@ -13,4 +14,11 @@ export function geoDistance(lat1: number, lon1: number, lat2: number, lon2: numb
 
 export function samplesDistance(p1: GeoPoint, p2: GeoPoint) {
     return geoDistance(p1.lat, p1.lng, p2.lat, p2.lng)
+}
+
+export function log(tag: string) {
+    return map(<T>(val: T) => {
+        console.log(`[${tag}]`)
+        return val
+    })
 }

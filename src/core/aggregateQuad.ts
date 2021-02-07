@@ -27,7 +27,7 @@ function isReliable(point: QPoint<EvaluatedSample>) {
 function estimateRisk(quad: Quad<EvaluatedSample>): GeoAggregation {
     const reliablePoints = quad.points.filter(isReliable)
     return {
-        risk: getMedianRisk(reliablePoints),
+        risk: count(reliablePoints),
         samples: quad.points,
         ...quad
     }
@@ -66,61 +66,4 @@ export function estimateReliability(
             }
         }),
     }))
-}
-
-const MAX_PERSON_SPEED = 10
-
-function getTimeDeltaSec(oldSample: RawSample, newSample: RawSample) {
-    return Math.abs((newSample.date - oldSample.date) / 1000)
-}
-
-function sourceSpeed(oldSample: RawSample, newSample: RawSample) {
-    const distance = samplesDistance(oldSample, newSample) / 1000
-    const time_delta = getTimeDeltaSec(oldSample, newSample) / 3600
-    return Math.abs(distance / time_delta)
-}
-
-function isSpeedValid(newSample: RawSample) {
-    return (oldSample: RawSample) => {
-        return sourceSpeed(newSample, oldSample) < MAX_PERSON_SPEED
-    }
-}
-
-export function isSampleConsistent(
-    newSample: RawSample,
-    oldSamples: RawSample[]
-) {
-    return oldSamples.length > 0
-        ?
-        oldSamples.every(isSpeedValid(newSample))
-        :
-        true
-}
-
-export function deltaTimeSince(now: number, lastTime: number) {
-    return now - lastTime
-}
-
-const DEBOUNCE_TIME_MS = 1000 * 60
-
-export function isTooFrequent(now: number, lastTime: number) {
-    return deltaTimeSince(now, lastTime) < DEBOUNCE_TIME_MS
-}
-
-export type SourceScore = {
-    id: string
-    karmaDelta: number
-}
-
-const karmaScores = [3, 1, -1, -2, -3]
-
-function computeSourceScore(finalRisk: number) {
-    return (points: EvaluatedSample) => ({
-        id: points.id,
-        karmaDelta: karmaScores[Math.abs(finalRisk - points.risk)]
-    })
-}
-
-export function sourceKarma(finalRisk: number, points: EvaluatedSample[]): SourceScore[] {
-    return points.map(computeSourceScore(finalRisk))
 }
