@@ -15,6 +15,6 @@ client.on('open', function open() {
                 long: 40,
             }
         })
-    );
+    )
 })
 client.on('message', (data: Buffer) => console.log(deserialize(data)))

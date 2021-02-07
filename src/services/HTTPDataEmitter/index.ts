@@ -1,6 +1,5 @@
 import { injectable } from 'inversify'
 import 'reflect-metadata'
-import { PublicAPI } from '../../core/apis/PublicAPI'
 
 import { listenOnPort } from './listenHTTP'
 

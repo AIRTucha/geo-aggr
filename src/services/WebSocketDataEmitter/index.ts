@@ -36,7 +36,7 @@ export class WebSocketDataEmitter implements DataEmitter {
     }
     emit(repository: EvaluationRepository): void {
         this.repository = repository
-        for (let [socket, { min, max }] of this.connections.entries()) {
+        for (const [socket, { min, max }] of this.connections.entries()) {
             socket.send(serialize(repository.get(min, max)))
         }
     }
