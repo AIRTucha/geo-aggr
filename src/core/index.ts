@@ -4,9 +4,9 @@ import TYPES from '../di/types'
 import { DataInjection, RawSample } from './apis/DataInjection'
 import { SampleStorage } from './apis/SampleStorage'
 
-import { interval } from 'rxjs'
+import { interval, Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
-import { estimateReliability, evaluateQuads } from './aggregateQuad'
+import { estimateReliability, evaluateQuads, GeoAggregation } from './aggregateQuad'
 import { DataEmitter } from './apis/DataEmitter'
 import { EvaluationStorage } from './apis/EvaluationStorage'
 
@@ -35,43 +35,52 @@ export class Core {
     @inject(TYPES.EvaluationStorage)
     private evaluationStorage!: EvaluationStorage
 
-    injectData(point: RawSample) {
-        // TODO: inject point to user storage
-        this.RawSampleStorage.add(point)
-    }
-
-    clearOutdateSamples() {
-        // this.RawSampleStorage.clearOutdateData()
-        // Remove outdated samples from user storage
-    }
-
-    run() {
+    startHandlingIncomingData() {
         this.dataInjection
             .listen()
             .pipe(
                 // TODO: check data integrity
             )
             .forEach(point => {
+                // TODO: inject point to user storage
                 this.RawSampleStorage.add(point)
             })
+    }
 
-        const geoAggregation = interval(TICK_INTERVAL).pipe(
-            map(() => this.clearOutdateSamples()),
+    startDataProcessing() {
+        const geoAggregation = this.processDataInBatch()
+
+        this.updateEmittedData(geoAggregation)
+        this.updateSourcesReliability(geoAggregation)
+    }
+
+    processDataInBatch() {
+        return interval(TICK_INTERVAL).pipe(
+            map(() => this.RawSampleStorage.clearOutdateData()),
             map(() => this.RawSampleStorage.getData()),
             map(estimateReliability),
             map(evaluateQuads),
         )
+    }
 
-        geoAggregation
+    updateEmittedData(data: Observable<GeoAggregation[]>) {
+        data
             .pipe(
                 map(evaluations => this.evaluationStorage.update(evaluations)),
             )
             .forEach(
                 repository => this.dataEmitter.emit(repository)
             )
+    }
 
+    updateSourcesReliability(data: Observable<GeoAggregation[]>) {
         // aggregate:
         //// update users score
         // emit result
+    }
+
+    run() {
+        this.startHandlingIncomingData()
+        this.startDataProcessing()
     }
 }
