@@ -103,8 +103,8 @@ export function deltaTimeSince(now: number, lastTime: number) {
 
 const DEBOUNCE_TIME_MS = 1000 * 60
 
-export function isNotTooFrequent(now: number, lastTime: number) {
-    return deltaTimeSince(now, lastTime) > DEBOUNCE_TIME_MS
+export function isTooFrequent(now: number, lastTime: number) {
+    return deltaTimeSince(now, lastTime) < DEBOUNCE_TIME_MS
 }
 
 export type SourceScore = {

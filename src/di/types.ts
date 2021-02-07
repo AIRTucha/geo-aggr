@@ -1,5 +1,6 @@
 export default {
-    Core: Symbol.for('Core'),
+    ProcessingCore: Symbol.for('ProcessingCore'),
+    InjectionCore: Symbol.for('InjectionCore'),
     DataInjection: Symbol.for('DataInjection'),
     DataEmitter: Symbol.for('DataEmitter'),
     SampleStorage: Symbol.for('SampleStorage'),

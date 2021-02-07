@@ -15,7 +15,7 @@ function notLaterThan15Minutes(now: number) {
 
 @injectable()
 export class QTreeSampleStorage implements SampleStorage {
-    private storage = qtree<SampleWithKarma>(100000)
+    private storage = qtree<SampleWithKarma>(100)
     add(point: SampleWithKarma): void {
         this.storage.insert(point)
     }

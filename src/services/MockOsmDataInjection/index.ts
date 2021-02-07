@@ -54,7 +54,7 @@ interface OsmData {
 @injectable()
 export class MockOsmDataInjection implements DataInjection {
   emit(signal: Signal, id: string): void {
-    console.log('MockOsmDataInjection', signal)
+    console.log('MockOsmDataInjection', signal, id)
   }
   listen(): Observable<RawSample> {
     let data: OsmData[]
@@ -67,19 +67,21 @@ export class MockOsmDataInjection implements DataInjection {
       execSync('npm run init-test-data')
       return this.listen()
     }
-
+    const timeDelta = 70000
     return new Observable(subscriber => {
+      let time = 60 * 1000
       let idx = 0
       setInterval(() => {
         subscriber.next({
           lat: data[idx].lat,
           lng: data[idx].lon,
           risk: genRandom(),
-          date: Math.floor(Date.now() - Math.random() * 1000 * 60 * 20 - 1000 * 30),
+          date: time,
           id: data[idx].id
         })
         idx += 1
-      }, 1000)
+        time += timeDelta
+      }, 10)
     })
   }
 }
