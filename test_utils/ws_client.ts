@@ -17,4 +17,10 @@ client.on('open', function open() {
         })
     )
 })
-client.on('message', (data: Buffer) => console.log(deserialize(data)))
+client.on('message', (data: Buffer) => {
+    const vals = deserialize(data)
+    console.log('New msg')
+    Object.keys(vals).forEach(key => {
+        console.log('risk', vals[key].risk)
+    })
+})

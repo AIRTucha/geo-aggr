@@ -6,7 +6,7 @@ import { SampleStorage } from './apis/SampleStorage'
 
 import { from, interval, Observable, partition } from 'rxjs'
 import { map, mergeMap } from 'rxjs/operators'
-import { estimateReliability, evaluateQuads, GeoAggregation, isSampleReliable, isTooFrequent, sourceKarma } from './aggregateQuad'
+import { estimateReliability, evaluateQuads, GeoAggregation, isSampleConsistent, isNotTooFrequent, sourceKarma } from './aggregateQuad'
 import { DataEmitter } from './apis/DataEmitter'
 import { EvaluationStorage } from './apis/EvaluationStorage'
 import { SourceStorage } from './apis/SourceStorage'
@@ -40,14 +40,14 @@ export class Core {
     private classifySamples(inputSamples: Observable<RawSample>) {
         const [samples, debouncedSamples] = partition(
             inputSamples,
-            point => isTooFrequent(
+            point => isNotTooFrequent(
                 point.date,
                 this.sourceStorage.getLastTime(point.id)
             )
         )
         const [reliableSamples, unreliableSamples] = partition(
             samples,
-            point => isSampleReliable(
+            point => isSampleConsistent(
                 point,
                 this.sourceStorage.getSamples(point.id)
             )

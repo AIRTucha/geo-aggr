@@ -27,7 +27,7 @@ function isReliable(point: QPoint<EvaluatedSample>) {
 function estimateRisk(quad: Quad<EvaluatedSample>): GeoAggregation {
     const reliablePoints = quad.points.filter(isReliable)
     return {
-        risk: count(reliablePoints),
+        risk: getMedianRisk(reliablePoints),
         samples: quad.points,
         ...quad
     }
@@ -38,7 +38,7 @@ export function evaluateQuads(quads: Quad<EvaluatedSample>[]): GeoAggregation[] 
 }
 
 function inRange(min: number, max: number, value: number) {
-    return true //value > min && value < max
+    return value >= min && value <= max
 }
 
 // manually selected, increase span of confidence interval
@@ -68,7 +68,7 @@ export function estimateReliability(
     }))
 }
 
-const MAX_PERSON_SPEED = 5
+const MAX_PERSON_SPEED = 10
 
 function getTimeDeltaSec(oldSample: RawSample, newSample: RawSample) {
     return Math.abs((newSample.date - oldSample.date) / 1000)
@@ -77,7 +77,7 @@ function getTimeDeltaSec(oldSample: RawSample, newSample: RawSample) {
 function sourceSpeed(oldSample: RawSample, newSample: RawSample) {
     const distance = samplesDistance(oldSample, newSample) / 1000
     const time_delta = getTimeDeltaSec(oldSample, newSample) / 3600
-    return distance / time_delta
+    return Math.abs(distance / time_delta)
 }
 
 function isSpeedValid(newSample: RawSample) {
@@ -86,7 +86,7 @@ function isSpeedValid(newSample: RawSample) {
     }
 }
 
-export function isSampleReliable(
+export function isSampleConsistent(
     newSample: RawSample,
     oldSamples: RawSample[]
 ) {
@@ -103,7 +103,7 @@ export function deltaTimeSince(now: number, lastTime: number) {
 
 const DEBOUNCE_TIME_MS = 1000 * 60
 
-export function isTooFrequent(now: number, lastTime: number) {
+export function isNotTooFrequent(now: number, lastTime: number) {
     return deltaTimeSince(now, lastTime) > DEBOUNCE_TIME_MS
 }
 

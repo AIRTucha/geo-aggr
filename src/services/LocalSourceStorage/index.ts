@@ -33,7 +33,7 @@ export class LocalSourceStorage implements SourceStorage {
         return this
             .getSamples(sourceId)
             .reduce(
-                (max, sample) => max > sample.date ? max : sample.date,
+                (max, { date }) => max > date ? max : date,
                 0
             )
     }
