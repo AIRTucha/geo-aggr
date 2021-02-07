@@ -35,9 +35,14 @@ export class WebSocketDataEmitter implements DataEmitter {
             })
     }
     emit(repository: EvaluationRepository): void {
-        this.repository = repository
-        for (const [socket, { min, max }] of this.connections.entries()) {
-            socket.send(serialize(repository.get(min, max)))
+        try {
+            this.repository = repository
+            for (const [socket, { min, max }] of this.connections.entries()) {
+                socket.send(serialize(repository.get(min, max)))
+            }
+        } catch (e) {
+            console.error('Cannot send data', e)
         }
+
     }
 }

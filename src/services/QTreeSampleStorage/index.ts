@@ -1,6 +1,6 @@
 import { injectable } from 'inversify'
 import 'reflect-metadata'
-import { SampleStorage } from '../../core/apis/SampleStorage'
+import { SampleStorage, SampleWithKarma } from '../../core/apis/SampleStorage'
 import { RawSample } from '../../core/apis/DataInjection'
 import qtree, { flatten, Quad } from './qtree'
 
@@ -15,17 +15,17 @@ function notLaterThan15Minutes(now: number) {
 
 @injectable()
 export class QTreeSampleStorage implements SampleStorage {
-    private storage = qtree<RawSample>(100000)
-    add(point: RawSample): void {
+    private storage = qtree<SampleWithKarma>(100000)
+    add(point: SampleWithKarma): void {
         this.storage.insert(point)
     }
-    clearOutdateData(): RawSample[] {
+    clearOutdateData(): SampleWithKarma[] {
         const now = Date.now()
         const [left, removed] = this.storage.partition(notLaterThan15Minutes(now))
         this.storage = left
         return flatten(removed.getQuads())
     }
-    getData(): Quad<RawSample>[] {
+    getData(): Quad<SampleWithKarma>[] {
         return this.storage.getQuads()
     }
 }

@@ -4,22 +4,21 @@ import TYPES from '../di/types'
 import { DataInjection, RawSample } from './apis/DataInjection'
 import { SampleStorage } from './apis/SampleStorage'
 
-import { interval, Observable } from 'rxjs'
-import { map } from 'rxjs/operators'
-import { estimateReliability, evaluateQuads, GeoAggregation } from './aggregateQuad'
+import { from, interval, Observable, partition } from 'rxjs'
+import { map, mergeMap } from 'rxjs/operators'
+import { estimateReliability, evaluateQuads, GeoAggregation, isSampleReliable, isTooFrequent, sourceKarma } from './aggregateQuad'
 import { DataEmitter } from './apis/DataEmitter'
 import { EvaluationStorage } from './apis/EvaluationStorage'
-
-function formatPoint(point: RawSample) {
-    return `id: ${point.id}, location: ${point.lat} ${point.long}`
-}
+import { SourceStorage } from './apis/SourceStorage'
+import { flatten } from '../services/QTreeSampleStorage/qtree'
 
 const TICK_INTERVAL = 1000 * 10
+const BAD_SAMPLE_PENALTY = -13
 
-function log<T>(val: T) {
+const log = map(<T>(val: T) => {
     console.log(val)
     return val
-}
+})
 
 @injectable()
 export class Core {
@@ -27,7 +26,7 @@ export class Core {
     private dataInjection!: DataInjection
 
     @inject(TYPES.SampleStorage)
-    private RawSampleStorage!: SampleStorage
+    private sampleStorage!: SampleStorage
 
     @inject(TYPES.DataEmitter)
     private dataEmitter!: DataEmitter
@@ -35,15 +34,51 @@ export class Core {
     @inject(TYPES.EvaluationStorage)
     private evaluationStorage!: EvaluationStorage
 
-    startHandlingIncomingData() {
-        this.dataInjection
-            .listen()
-            .pipe(
-                // TODO: check data integrity
+    @inject(TYPES.SourceStorage)
+    private sourceStorage!: SourceStorage
+
+    private classifySamples(inputSamples: Observable<RawSample>) {
+        const [samples, debouncedSamples] = partition(
+            inputSamples,
+            point => isTooFrequent(
+                point.date,
+                this.sourceStorage.getLastTime(point.id)
             )
+        )
+        const [reliableSamples, unreliableSamples] = partition(
+            samples,
+            point => isSampleReliable(
+                point,
+                this.sourceStorage.getSamples(point.id)
+            )
+        )
+
+        return [reliableSamples, debouncedSamples, unreliableSamples]
+    }
+
+    startHandlingIncomingData() {
+        const [
+            reliableSamples,
+            debouncedSamples,
+            unreliableSamples
+        ] = this.classifySamples(this.dataInjection.listen())
+
+        reliableSamples
             .forEach(point => {
-                // TODO: inject point to user storage
-                this.RawSampleStorage.add(point)
+                const karma = this.sourceStorage.getKarma(point.id)
+                const sampleWithKarma = { ...point, karma }
+                this.sampleStorage.add(sampleWithKarma)
+                this.sourceStorage.addSample(sampleWithKarma)
+            })
+
+        debouncedSamples
+            .forEach(point => {
+                this.dataInjection.emit('TOO_HIGH_FREQUENCY', point.id)
+            })
+
+        unreliableSamples
+            .forEach(point => {
+                this.sourceStorage.updateKarma(point.id, BAD_SAMPLE_PENALTY)
             })
     }
 
@@ -56,9 +91,13 @@ export class Core {
 
     processDataInBatch() {
         return interval(TICK_INTERVAL).pipe(
-            map(() => this.RawSampleStorage.clearOutdateData()),
-            map(() => this.RawSampleStorage.getData()),
-            map(estimateReliability),
+            map(() => this.sampleStorage.clearOutdateData()),
+            map(outdateSamples => this.sourceStorage.removeSample(outdateSamples)),
+            map(() => this.sampleStorage.getData()),
+            map(samples => {
+                const [sd, mean] = this.sourceStorage.getKarmaStat()
+                return estimateReliability(sd, mean, samples)
+            }),
             map(evaluateQuads),
         )
     }
@@ -69,14 +108,24 @@ export class Core {
                 map(evaluations => this.evaluationStorage.update(evaluations)),
             )
             .forEach(
-                repository => this.dataEmitter.emit(repository)
+                repository => {
+                    this.dataEmitter.emit(repository)
+                }
             )
     }
 
     updateSourcesReliability(data: Observable<GeoAggregation[]>) {
-        // aggregate:
-        //// update users score
-        // emit result
+        data
+            .pipe(
+                mergeMap(from),
+                map(point => sourceKarma(point.risk, point.samples)),
+                mergeMap(from),
+            )
+            .forEach(
+                karmaChange => {
+                    this.sourceStorage.updateKarma(karmaChange.id, karmaChange.karmaDelta)
+                }
+            )
     }
 
     run() {

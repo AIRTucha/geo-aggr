@@ -12,6 +12,8 @@ import { MockEvaluationStorage } from '../services/MockEvaluationStorage'
 import { QTreeSampleStorage } from '../services/QTreeSampleStorage'
 import { EvaluationStorage } from '../core/apis/EvaluationStorage'
 import { KDEvaluationStorage } from '../services/KDEvaluationStorage'
+import { SourceStorage } from '../core/apis/SourceStorage'
+import { LocalSourceStorage } from '../services/LocalSourceStorage'
 
 abstract class BaseContainer {
     protected container = new Container()
@@ -26,6 +28,7 @@ abstract class BaseContainer {
         this.container.bind<DataEmitter>(TYPES.DataEmitter).to(WebSocketDataEmitter)
         this.container.bind<SampleStorage>(TYPES.SampleStorage).to(QTreeSampleStorage)
         this.container.bind<EvaluationStorage>(TYPES.EvaluationStorage).to(KDEvaluationStorage)
+        this.container.bind<SourceStorage>(TYPES.SourceStorage).to(LocalSourceStorage)
     }
 
     abstract bindInfra(): void

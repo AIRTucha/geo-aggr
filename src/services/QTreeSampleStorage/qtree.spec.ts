@@ -1,4 +1,5 @@
-import qtree, { flatten, geoDistance, QPoint, QTree, Quad } from './qtree'
+import { geoDistance } from '../../utils'
+import qtree, { flatten, QPoint, QTree, Quad } from './qtree'
 
 const coordsDeltaSmall = 0.0002
 const coordsDeltaLarge = 30
