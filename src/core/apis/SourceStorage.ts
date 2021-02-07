@@ -1,5 +1,5 @@
-import { RawSample } from "./DataInjection";
-import { SampleWithKarma } from "./SampleStorage";
+import { RawSample } from './DataInjection'
+import { SampleWithKarma } from './SampleStorage'
 
 export interface SourceStorage {
     getSamples(sourceId: string): SampleWithKarma[]
