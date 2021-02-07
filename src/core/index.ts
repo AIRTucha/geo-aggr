@@ -2,7 +2,6 @@ import { inject, injectable } from 'inversify'
 import 'reflect-metadata'
 import TYPES from '../di/types'
 import { DataInjection, RawSample } from './apis/DataInjection'
-import { PublicAPI } from './apis/PublicAPI'
 import { SampleStorage } from './apis/SampleStorage'
 
 import { interval } from 'rxjs'
@@ -61,7 +60,6 @@ export class Core {
             map(() => this.RawSampleStorage.getData()),
             map(estimateReliability),
             map(evaluateQuads),
-            // map(log),
         )
 
         geoAggregation

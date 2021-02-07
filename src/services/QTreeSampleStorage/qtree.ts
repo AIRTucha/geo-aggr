@@ -170,8 +170,7 @@ class QuadBranch<T> extends QuadTree<T>{
 
     getQuads(): Quad<T>[] {
         return branchList(this.branches)
-            .map(getQuads)
-            .flat()
+            .flatMap(getQuads)
             .filter(isNotEmptyArray)
     }
 
