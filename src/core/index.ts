@@ -15,8 +15,8 @@ import { flatten } from '../services/QTreeSampleStorage/qtree'
 const TICK_INTERVAL = 1000 * 10
 const BAD_SAMPLE_PENALTY = -13
 
-const log = map(<T>(val: T) => {
-    console.log(val)
+const log = (tag: string) => map(<T>(val: T) => {
+    console.log(`[${tag}]`)
     return val
 })
 
@@ -92,23 +92,29 @@ export class Core {
     processDataInBatch() {
         return interval(TICK_INTERVAL).pipe(
             map(() => this.sampleStorage.clearOutdateData()),
+            log('Clear Outdated'),
             map(outdateSamples => this.sourceStorage.removeSample(outdateSamples)),
             map(() => this.sampleStorage.getData()),
+            log('Get Data'),
             map(samples => {
                 const [sd, mean] = this.sourceStorage.getKarmaStat()
                 return estimateReliability(sd, mean, samples)
             }),
+            log('Estimate reliability'),
             map(evaluateQuads),
+            log('Evaluated results'),
         )
     }
 
     updateEmittedData(data: Observable<GeoAggregation[]>) {
         data
             .pipe(
+                log('Update evaluation storage'),
                 map(evaluations => this.evaluationStorage.update(evaluations)),
             )
             .forEach(
                 repository => {
+                    console.log('Emit new evaluation')
                     this.dataEmitter.emit(repository)
                 }
             )
@@ -118,6 +124,7 @@ export class Core {
         data
             .pipe(
                 mergeMap(from),
+                log('Recompute karma'),
                 map(point => sourceKarma(point.risk, point.samples)),
                 mergeMap(from),
             )

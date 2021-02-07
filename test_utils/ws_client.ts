@@ -8,11 +8,11 @@ client.on('open', function open() {
         serialize({
             min: { // south-west
                 lat: 50,
-                long: 30,
+                lng: 30,
             },
             max: { // north-east
                 lat: 60,
-                long: 40,
+                lng: 40,
             }
         })
     )
@@ -21,6 +21,6 @@ client.on('message', (data: Buffer) => {
     const vals = deserialize(data)
     console.log('New msg')
     Object.keys(vals).forEach(key => {
-        console.log('risk', vals[key].risk)
+        console.log('risk:', vals[key].risk)
     })
 })

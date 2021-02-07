@@ -2,7 +2,6 @@ import { id, injectable } from 'inversify'
 import { DataEmitter, } from '../../core/apis/DataEmitter'
 import 'reflect-metadata'
 import ws from 'ws'
-import http from 'http'
 import { deserialize, serialize } from 'bson'
 import { GeoPoint } from '../../core/apis/DataInjection'
 import { EvaluationRepository } from '../../core/apis/EvaluationStorage'
@@ -24,8 +23,13 @@ export class WebSocketDataEmitter implements DataEmitter {
                 }
                 const addDataSub = (data: Buffer) => {
                     const screenBounds = deserialize(data) as ScreenBounds
-                    if (this.repository)
-                        socket.send(serialize(this.repository.get(screenBounds.min, screenBounds.max)))
+                    if (this.repository) {
+                        const points = this
+                            .repository
+                            .get(screenBounds.min, screenBounds.max)
+                            .map(({ lat, lng, risk }) => ({ lat, lng, risk }))
+                        socket.send(serialize(points))
+                    }
                     this.connections.set(socket, screenBounds)
                 }
                 socket

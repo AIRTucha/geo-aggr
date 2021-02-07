@@ -75,7 +75,7 @@ export class MockOsmDataInjection implements DataInjection {
           lat: data[idx].lat,
           lng: data[idx].lon,
           risk: genRandom(),
-          date: Math.floor(Date.now() - Math.random() * 1000 * 60 * 20),
+          date: Math.floor(Date.now() - Math.random() * 1000 * 60 * 20 - 1000 * 30),
           id: data[idx].id
         })
         idx += 1
