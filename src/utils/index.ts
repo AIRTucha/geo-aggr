@@ -18,7 +18,7 @@ export function samplesDistance(p1: GeoPoint, p2: GeoPoint) {
 
 export function log(tag: string) {
     return map(<T>(val: T) => {
-        console.log(`[${tag}]`)
+        console.log(`${new Date().toUTCString()} [${tag}]`)
         return val
     })
 }

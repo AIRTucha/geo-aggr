@@ -53,13 +53,13 @@ export default class Core {
         this.dataInjection
             .listen()
             .pipe(
-                log('New data sample arrived'),
                 filter(
                     point => this.debounceTooFrequentSamples(point)
                 ),
                 filter(
                     point => this.detectIncontinentSamples(point)
                 ),
+                log('New data sample arrived'),
             ).forEach(point => {
                 const karma = this.sourceStorage.getKarma(point.id)
                 const sampleWithKarma = { ...point, karma }
