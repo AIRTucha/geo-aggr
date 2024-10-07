@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
+        "allowJs": true,
+        "checkJs": false,
+        "baseUrl": "./packages",
+        "downlevelIteration": true,
+        "esModuleInterop": true,
+        "typeRoots": [
+            "./node_modules/@types",
+            "./typings"
+        ],
+        "jsx": "preserve",
+        "lib": [
+            "ESNext",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "noEmit": true,
+        "strict": true,
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}

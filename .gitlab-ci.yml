@@ -1,0 +1,18 @@
+stages:
+  - test
+  - build
+  - deploy
+
+include:
+  - project: 'fbk-team/include'
+    ref: master
+    file: 'ci-test-node.yml'
+  - project: 'fbk-team/include'
+    ref: master
+    file: 'build.yml'
+  - project: 'fbk-team/include'
+    ref: master
+    file: 'deploy-devel.yml'
+  - project: 'fbk-team/include'
+    ref: master
+    file: 'deploy-stage.yml'
